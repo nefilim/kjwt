@@ -5,7 +5,9 @@
 build/
 *.iws
 *.ipr
-key.pgp
+*.pgp
+*.gpg
+publish.txt
 
 # Intellij
 out/
