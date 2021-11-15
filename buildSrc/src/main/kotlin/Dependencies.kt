@@ -1,0 +1,61 @@
+object PluginIds { // please keep this sorted in sections
+    // Kotlin
+    const val Kotlin = "kotlin"
+    const val KotlinKapt = "kapt"
+    const val KotlinXSerialization = "plugin.serialization"
+
+    // 3rd Party
+    const val AxionRelease = "pl.allegro.tech.build.axion-release"
+    const val DependencyUpdates = "com.github.ben-manes.versions"
+    const val Idea = "idea"
+    const val TaskTree = "com.dorongold.task-tree"
+    const val TestLogger = "com.adarshr.test-logger"
+}
+
+object PluginVersions { // please keep this sorted in sections
+    // Kotlin
+    const val Kotlin = "1.5.31"
+
+    // 3rd Party
+    const val AxionRelease = "1.13.5"
+    const val DependencyUpdates = "0.39.0"
+    const val TaskTree = "2.1.0"
+    const val TestLogger = "3.0.0"
+}
+
+object Versions {
+    // kotlin
+    const val Kotlin = PluginVersions.Kotlin
+    const val KotlinXCoroutines = "1.5.2"
+    const val KotlinXSerialization = "1.3.0"
+
+    // 3rd Party
+    const val Arrow = "1.0.1"
+    const val Kotest = "4.6.3"
+    const val KotestExtensionsArrow = "1.1.1"
+    const val KotlinLogging = "2.0.11"
+    const val Logback = "1.2.6"
+    const val SLF4J = "1.7.30"
+}
+
+object Libraries {
+    // Kotlin
+    const val KotlinXCoRoutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KotlinXCoroutines}"
+    const val KotlinXSerializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.KotlinXSerialization}"
+
+    // 3rd Party
+    const val ArrowStack = "io.arrow-kt:arrow-stack:${Versions.Arrow}"
+    const val ArrowCore = "io.arrow-kt:arrow-core"
+
+    const val NimbusJWT = "com.nimbusds:nimbus-jose-jwt:9.15.2"
+
+
+    const val Kotest = "io.kotest:kotest-runner-junit5-jvm:${Versions.Kotest}"
+    const val KotestAssertions = "io.kotest:kotest-assertions-core-jvm:${Versions.Kotest}"
+    const val KotestAssertionsArrow = "io.kotest.extensions:kotest-assertions-arrow:${Versions.KotestExtensionsArrow}"
+
+    const val KotlinLogging = "io.github.microutils:kotlin-logging-jvm:${Versions.KotlinLogging}"
+    const val LogbackClassic = "ch.qos.logback:logback-classic:${Versions.Logback}"
+
+    const val SLF4JAPI = "org.slf4j:slf4j-api:${Versions.SLF4J}"
+}
