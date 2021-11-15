@@ -17,7 +17,7 @@ object PluginVersions { // please keep this sorted in sections
     const val Kotlin = "1.5.31"
 
     // 3rd Party
-    const val AxionRelease = "1.13.5"
+    const val AxionRelease = "1.13.6"
     const val DependencyUpdates = "0.39.0"
     const val TaskTree = "2.1.0"
     const val TestLogger = "3.0.0"
