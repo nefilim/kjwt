@@ -119,7 +119,7 @@ publishing {
                     developer {
                         id.set("nefilim")
                         name.set("nefilim")
-                        email.set("nefilim@github.com")
+                        email.set("nefilim@hotmail.com")
                     }
                 }
                 scm {
