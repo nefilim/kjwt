@@ -5,6 +5,7 @@
 build/
 *.iws
 *.ipr
+key.pgp
 
 # Intellij
 out/

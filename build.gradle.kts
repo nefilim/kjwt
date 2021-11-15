@@ -13,6 +13,7 @@ plugins {
     id(PluginIds.Idea)
     id(PluginIds.AxionRelease) version PluginVersions.AxionRelease
     `maven-publish`
+    signing
 }
 
 buildscript {
@@ -81,14 +82,21 @@ dependencies {
     }
 }
 
+fun repoURL(): String {
+    return if (version.toString().endsWith("SNAPSHOT"))
+        "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+    else
+        "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+}
+
 publishing {
     repositories {
         maven {
             name = "OSSRH"
-            setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+            url = uri(repoURL())
             credentials {
-                username = System.getenv("OSSRH_USER") ?: return@credentials
-                password = System.getenv("OSSRH_PASSWORD") ?: return@credentials
+                username = System.getenv("OSSRH_USER")
+                password = System.getenv("OSSRH_PASSWORD") 
             }
         }
     }
