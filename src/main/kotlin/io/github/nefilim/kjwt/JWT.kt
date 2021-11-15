@@ -1,4 +1,4 @@
-package com.github.nefilim.kjwt
+package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.Option
@@ -133,7 +133,7 @@ class JWT<T: JWSAlgorithm> private constructor(
         }
     }
 
-    private fun json(format: Json = JWT.format): List<String> {
+    private fun json(format: Json = Companion.format): List<String> {
         return listOf(
             header.toJSON(),
             format.encodeToString(buildJsonObject {

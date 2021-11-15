@@ -1,4 +1,4 @@
-package com.github.nefilim.kjwt
+package io.github.nefilim.kjwt
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer

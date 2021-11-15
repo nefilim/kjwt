@@ -1,4 +1,4 @@
-package com.github.nefilim.kjwt
+package io.github.nefilim.kjwt
 
 import arrow.core.None
 import arrow.core.Option

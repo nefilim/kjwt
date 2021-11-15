@@ -27,7 +27,7 @@ scmVersion {
     versionIncrementer("incrementPatch")
 }
 
-group = "com.github.nefilim.kjwt"
+group = "io.github.nefilim.kjwt"
 version = scmVersion.version
 
 repositories {
@@ -82,8 +82,16 @@ dependencies {
 }
 
 publishing {
-//    repositories {
-//    }
+    repositories {
+        maven {
+            name = "OSSRH"
+            setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+            credentials {
+                username = System.getenv("OSSRH_USER") ?: return@credentials
+                password = System.getenv("OSSRH_PASSWORD") ?: return@credentials
+            }
+        }
+    }
 
     publications {
         create<MavenPublication>("mavenJava") {

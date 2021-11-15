@@ -1,4 +1,4 @@
-package com.github.nefilim.kjwt
+package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.computations.either

@@ -1,4 +1,4 @@
-package com.github.nefilim.kjwt
+package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.computations.either
@@ -8,15 +8,15 @@ import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
-suspend fun <T: JWSECDSAAlgorithm>JWT<T>.sign(key: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+suspend fun <T: JWSECDSAAlgorithm> JWT<T>.sign(key: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
     return this.header.algorithm.sign(this, key)
 }
 
-suspend fun <T: JWSRSAAlgorithm>JWT<T>.sign(key: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+suspend fun <T: JWSRSAAlgorithm> JWT<T>.sign(key: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
     return this.header.algorithm.sign(this, key)
 }
 
-suspend fun <T: JWSHMACAlgorithm>JWT<T>.sign(secret: String): Either<JWTSignError, SignedJWT<T>> {
+suspend fun <T: JWSHMACAlgorithm> JWT<T>.sign(secret: String): Either<JWTSignError, SignedJWT<T>> {
     return this.header.algorithm.sign(this, secret)
 }
 
