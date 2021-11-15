@@ -82,11 +82,9 @@ dependencies {
     }
 }
 
-fun repoURL(): String {
-    return if (version.toString().endsWith("SNAPSHOT"))
-        "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-    else
-        "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 signing {
@@ -107,12 +105,41 @@ publishing {
 
     publications {
         create<MavenPublication>("mavenJava") {
+            pom {
+                name.set("kJWT")
+                description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
+                url.set("https://github.com/nefilim/kjwt")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://www.opensource.org/licenses/mit-license.php")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("nefilim")
+                        name.set("nefilim")
+                        email.set("nefilim@github.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:https://github.com/nefilim/kjwt.git")
+                    url.set("https://github.com/nefilim/kjwt")
+                }
+            }
             artifactId = project.name
             groupId = project.group.toString()
             version = project.version.toString()
             from(components["java"])
         }
     }
+}
+
+fun repoURL(): String {
+    return if (version.toString().endsWith("SNAPSHOT"))
+        "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+    else
+        "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
 }
 
 fun isNonStable(version: String): Boolean {
