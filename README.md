@@ -105,7 +105,7 @@ and for a private claim:
 ```kotlin
 fun issuer(issuer: String): ClaimsValidator = requiredOptionClaim( // an absent claim would be considered an error
     "admin", // a label for the claim (used in error reporting) 
-    { claimValueAsBoolean() }, // a function that returns the claim from the JWTClaims/JWT 
+    { claimValueAsBoolean("admin") }, // a function that returns the claim from the JWTClaims/JWT 
     { it == true }, // the predicate to evaluate the claim value 
 )
 ```
@@ -120,6 +120,13 @@ fun standardValidation(claims: JWTClaims): ValidatedNel<out JWTVerificationError
     validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))
 (claims)
 ```
+
+Predefined claim validators are bundled for these public claims:
+* issuer
+* subject
+* audience
+* expired
+* notbefore
 
 # Verifying a Signature
 
