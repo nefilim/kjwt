@@ -143,7 +143,13 @@ Combining claim validation and signature verification into one step can be done 
                        
 ```kotlin
 val standardValidation: ClaimsValidator = { claims ->
-    validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
+    validateClaims(
+        notBefore, 
+        expired, 
+        issuer("thecompany"), 
+        subject("1234567890"), 
+        audience("http://thecompany.com")
+    )(claims)
 }
 
 verify<JWSES256Algorithm>("eyJhbGci...", publicKey, standardValidation)
