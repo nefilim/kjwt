@@ -43,10 +43,10 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xinline-classes", "-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs = listOf("-Xjsr305=strict", "-Xopt-in=kotlin.RequiresOptIn")
         jvmTarget = "11"
-        languageVersion = "1.5"
-        apiVersion = "1.5"
+        languageVersion = "1.6"
+        apiVersion = "1.6"
     }
 }
 
@@ -111,8 +111,8 @@ publishing {
                 url.set("https://github.com/nefilim/kjwt")
                 licenses {
                     license {
-                        name.set("MIT License")
-                        url.set("https://www.opensource.org/licenses/mit-license.php")
+                        name.set("GPL-3.0-only")
+                        url.set("https://opensource.org/licenses/GPL-3.0")
                     }
                 }
                 developers {

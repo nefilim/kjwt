@@ -14,20 +14,20 @@ object PluginIds { // please keep this sorted in sections
 
 object PluginVersions { // please keep this sorted in sections
     // Kotlin
-    const val Kotlin = "1.5.31"
+    const val Kotlin = "1.6.0"
 
     // 3rd Party
     const val AxionRelease = "1.13.6"
     const val DependencyUpdates = "0.39.0"
     const val TaskTree = "2.1.0"
-    const val TestLogger = "3.0.0"
+    const val TestLogger = "3.1.0"
 }
 
 object Versions {
     // kotlin
     const val Kotlin = PluginVersions.Kotlin
     const val KotlinXCoroutines = "1.5.2"
-    const val KotlinXSerialization = "1.3.0"
+    const val KotlinXSerialization = "1.3.1"
 
     // 3rd Party
     const val Arrow = "1.0.1"
@@ -35,6 +35,7 @@ object Versions {
     const val KotestExtensionsArrow = "1.1.1"
     const val KotlinLogging = "2.0.11"
     const val Logback = "1.2.6"
+    const val Nimbus = "9.15.2"
     const val SLF4J = "1.7.30"
 }
 
@@ -47,7 +48,7 @@ object Libraries {
     const val ArrowStack = "io.arrow-kt:arrow-stack:${Versions.Arrow}"
     const val ArrowCore = "io.arrow-kt:arrow-core"
 
-    const val NimbusJWT = "com.nimbusds:nimbus-jose-jwt:9.15.2"
+    const val NimbusJWT = "com.nimbusds:nimbus-jose-jwt:${Versions.Nimbus}"
 
 
     const val Kotest = "io.kotest:kotest-runner-junit5-jvm:${Versions.Kotest}"
