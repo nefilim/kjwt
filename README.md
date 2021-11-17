@@ -72,7 +72,7 @@ The resulting `DecodedJWT` contains a `JWT<JWSES256Algorithm>` and the individua
 claims can be accessed via the predefined accessors, eg:
 
 ```kotlin
-JWT.decode("...").map { 
+JWT.decode("...").tap { 
     println("the issuer is: ${it.issuer()}")
     println("the subject is: ${it.subject()}")
 }
