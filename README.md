@@ -25,7 +25,7 @@ Include the following dependency: `io.github.nefilim.kjwt:kjwt:0.1.5` in your bu
 ## Creating a JWT
 
 ```kotlin
-val jwt = JWT.es256("123") {
+val jwt = JWT.es256("kid-123") {
     subject("1234567890")
     issuer("nefilim")
     claim("name", "John Doe")
