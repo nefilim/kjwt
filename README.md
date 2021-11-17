@@ -111,7 +111,7 @@ fun issuer(issuer: String): ClaimsValidator = requiredOptionClaim( // an absent 
 ```
 
 in this case the `ValidationNel` would contain `JWTValidationError.RequiredClaimIsMissing("admin")` if the claim was 
-absent in the JWT or `JWTValidationError.RequiredClaimIsInvalid` in case it predicate failed (the value was false).
+absent in the JWT or `JWTValidationError.RequiredClaimIsInvalid("admin")` in case it predicate failed (the value was false).
 
 `ClaimValidator`s can be composed using `fun validateClaims(...)`, eg:
 
