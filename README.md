@@ -80,7 +80,7 @@ JWT.decode("...").tap {
 
 private claims be accessed with `claimValue`/`claimValueAsBoolean`/`claimValueAsLong` etc.
 
-# Verifying a JWT
+# Validating a JWT
 
 Custom claim validators can be created by defining `ClaimsValidator`:
 
