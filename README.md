@@ -20,7 +20,7 @@ The following [Algorithms](https://datatracker.ietf.org/doc/html/rfc7518) are su
      
 # Usage
 
-Include the following dependency: `io.github.nefilim.kjwt:kjwt:0.1.5` in your build. 
+Include the following dependency: `io.github.nefilim.kjwt:kjwt:0.1.6` in your build. 
 
 ## Creating a JWT
 

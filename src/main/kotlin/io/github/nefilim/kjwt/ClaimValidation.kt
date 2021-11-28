@@ -11,7 +11,6 @@ import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import java.time.LocalDateTime
 
-
 sealed interface JWTValidationError: JWTVerificationError {
     object TokenExpired: JWTValidationError
     object TokenNotValidYet: JWTValidationError

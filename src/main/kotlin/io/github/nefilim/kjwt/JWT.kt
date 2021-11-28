@@ -88,7 +88,7 @@ class JWT<T: JWSAlgorithm> private constructor(
 
             fun build(): Map<String, JsonPrimitive> = Collections.unmodifiableMap(values)
         }
-        val format = Json { }
+        val format = Json
         private val prettyFormat = Json {
             prettyPrint = true
         }

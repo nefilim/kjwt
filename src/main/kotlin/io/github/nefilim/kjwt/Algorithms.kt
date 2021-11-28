@@ -36,8 +36,8 @@ sealed interface JWSAlgorithm {
     val algorithmName: String
 }
 sealed interface JWSSymmetricAlgorithm: JWSAlgorithm {
-    suspend fun <T: JWSSymmetricAlgorithm>sign(jwt: JWT<T>, secret: String): Either<JWTSignError, SignedJWT<T>> {
-        return either<JWTSignError, ByteArray> {
+    fun <T: JWSSymmetricAlgorithm>sign(jwt: JWT<T>, secret: String): Either<JWTSignError, SignedJWT<T>> {
+        return either.eager<JWTSignError, ByteArray> {
             val nonBlankSecret = Either.conditionally(secret.isNotBlank(), { JWTSignError.InvalidKey }, { secret }).bind()
             val secretBytes = stringToBytes(nonBlankSecret).mapLeft { JWTSignError.InvalidKey }.bind()
             val dataToSign = stringToBytes(jwt.encode()).mapLeft { JWTSignError.InvalidJWT }.bind()
@@ -50,8 +50,8 @@ sealed interface JWSSymmetricAlgorithm: JWSAlgorithm {
             SignedJWT(jwt, it, jwt.header.algorithm)
         }
     }
-    suspend fun <T: JWSSymmetricAlgorithm>verifySignature(dJWT: DecodedJWT<T>, secret: String): Either<JWTVerificationError, JWT<T>> {
-        return either<JWTVerificationError, JWT<T>> {
+    fun <T: JWSSymmetricAlgorithm>verifySignature(dJWT: DecodedJWT<T>, secret: String): Either<JWTVerificationError, JWT<T>> {
+        return either.eager<JWTVerificationError, JWT<T>> {
             val signature = Either.fromNullable(dJWT.signature()).mapLeft { JWTVerificationError.MissingSignature }.bind()
             val signedJWT = sign(dJWT.jwt, secret).mapLeft { JWTVerificationError.InvalidJWT }.bind()
             Either.conditionally(jwtEncodeBytes(signedJWT.signature) == signature, { JWTVerificationError.InvalidSignature }, { dJWT.jwt} ).bind()
@@ -59,14 +59,14 @@ sealed interface JWSSymmetricAlgorithm: JWSAlgorithm {
     }
 }
 sealed interface JWSAsymmetricAlgorithm: JWSAlgorithm {
-    suspend fun <T: JWSAsymmetricAlgorithm>verifySignature(
+    fun <T: JWSAsymmetricAlgorithm>verifySignature(
         dJWT: DecodedJWT<T>,
         key: PublicKey,
         signature: Either<JWTVerificationError, ByteArray>,
     ): Either<JWTVerificationError, JWT<T>> {
         val signer = Signature.getInstance(dJWT.jwt.header.algorithm.algorithmName)
 
-        return either<JWTVerificationError, Boolean> {
+        return either.eager<JWTVerificationError, Boolean> {
             Either.catch { signer.initVerify(key) }.mapLeft { JWTVerificationError.KeyAlgorithmMismatch }.bind()
             val dataToVerify = Either.catch { dJWT.signedData().toByteArray() }.mapLeft { JWTVerificationError.InvalidJWT }.bind()
             val sig = signature.bind()
@@ -96,7 +96,7 @@ object JWSHMAC512Algorithm: JWSHMACAlgorithm {
 }
 
 sealed interface JWSRSAAlgorithm: JWSAsymmetricAlgorithm {
-    suspend fun <T: JWSRSAAlgorithm>sign(jwt: JWT<T>, privateKey: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+    fun <T: JWSRSAAlgorithm>sign(jwt: JWT<T>, privateKey: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
         val encoded = jwt.encode()
         return Either.catch {
             val data = encoded.toByteArray(Charsets.UTF_8)
@@ -133,9 +133,9 @@ sealed interface JWSECDSAAlgorithm: JWSAsymmetricAlgorithm {
     val curve: String
     val signatureSize: Int
 
-    suspend fun <T: JWSECDSAAlgorithm>sign(jwt: JWT<T>, privateKey: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+    fun <T: JWSECDSAAlgorithm>sign(jwt: JWT<T>, privateKey: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
         val encoded = jwt.encode()
-        return either<JWTSignError, ByteArray> {
+        return either.eager<JWTSignError, ByteArray> {
             val algorithm = jwt.header.algorithm as JWSECDSAAlgorithm
             val signedData = Either.catch {
                 val data = encoded.toByteArray(Charsets.UTF_8)
@@ -151,8 +151,8 @@ sealed interface JWSECDSAAlgorithm: JWSAsymmetricAlgorithm {
     }
 
     companion object {
-        suspend fun <T: JWSECDSAAlgorithm>signature(dJWT: DecodedJWT<T>): Either<JWTVerificationError, ByteArray> {
-            return either {
+        fun <T: JWSECDSAAlgorithm>signature(dJWT: DecodedJWT<T>): Either<JWTVerificationError, ByteArray> {
+            return either.eager {
                 val signatureJOSE = Either.fromNullable(dJWT.signature()).mapLeft { JWTVerificationError.MissingSignature }.bind()
                 val signatureDecoded = decodeString(signatureJOSE)
                 joseToDER(signatureDecoded).mapLeft { JWTVerificationError.InvalidJWT }.bind()
