@@ -32,12 +32,12 @@ private suspend fun signEncodedJWTWithKMS(
     }.mapLeft { JWTSignError.SigningError(it) }
 }
 
-suspend fun <T: JWSECDSAAlgorithm> JWT<T>.signWithKMSCommon(
+suspend fun <T: JWSECDSAAlgorithm> JWT<T>.signWithKMS(
     stub: KeyManagementServiceGrpcKt.KeyManagementServiceCoroutineStub,
-    cryptoKeyVersion: CryptoKeyVersion,
+    cryptoKeyVersion: ECCryptoKeyVersion,
     headers: Metadata,
 ): Either<JWTSignError, SignedJWT<T>> {
-    return this.header.algorithm.sign(this, signEncodedJWTWithKMS(stub, cryptoKeyVersion, headers))
+    return this.header.algorithm.sign(this, signEncodedJWTWithKMS(stub, cryptoKeyVersion.key, headers))
 }
 
 suspend fun <T: JWSRSAAlgorithm> JWT<T>.signWithKMS(
@@ -48,6 +48,7 @@ suspend fun <T: JWSRSAAlgorithm> JWT<T>.signWithKMS(
     return this.header.algorithm.sign(this, signEncodedJWTWithKMS(stub, cryptoKeyVersion.key, headers))
 }
 
+// TODO replace runtime invariant checking with compile time type checking
 data class RSACryptoKeyVersion(
     val key: CryptoKeyVersion
 ) {

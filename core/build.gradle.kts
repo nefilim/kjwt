@@ -45,7 +45,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             pom {
-                name.set("kJWT")
+                name.set("kjwt-core")
                 description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
                 url.set("https://github.com/nefilim/kjwt")
                 licenses {

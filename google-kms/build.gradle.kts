@@ -17,20 +17,14 @@ dependencies {
         project(":core"),
         platform(Libraries.ArrowStack),
         Libraries.ArrowCore,
-        Libraries.GRPC.Auth,
         Libraries.GRPC.Protobuf,
         Libraries.GRPC.Stub,
         Libraries.GRPC.StubKotlin,
         Libraries.Protobuf.Kotlin,
         Libraries.Protobuf.JavaUtil,
-        Libraries.KotlinLogging,
-        Libraries.LogbackClassic,
-        Libraries.KotlinXCoRoutinesCore,
     ).map {
         implementation(it)
     }
-
-    runtimeOnly(Libraries.GRPC.Netty)
 }
 
 protobuf {
@@ -77,7 +71,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             pom {
-                name.set("kJWT")
+                name.set("kjwt-google-kms")
                 description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
                 url.set("https://github.com/nefilim/kjwt")
                 licenses {
