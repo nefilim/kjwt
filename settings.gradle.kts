@@ -6,3 +6,8 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+include(
+    "core",
+    "google-kms",
+)

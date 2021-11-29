@@ -8,12 +8,12 @@ import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
-fun <T: JWSECDSAAlgorithm> JWT<T>.sign(key: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
-    return this.header.algorithm.sign(this, key)
+suspend fun <T: JWSECDSAAlgorithm> JWT<T>.sign(privateKey: ECPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+    return this.header.algorithm.sign(this, JWSECDSAAlgorithm.signDigestWithPrivateKey(this.header.algorithm, privateKey))
 }
 
-fun <T: JWSRSAAlgorithm> JWT<T>.sign(key: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
-    return this.header.algorithm.sign(this, key)
+suspend fun <T: JWSRSAAlgorithm> JWT<T>.sign(privateKey: RSAPrivateKey): Either<JWTSignError, SignedJWT<T>> {
+    return this.header.algorithm.sign(this, JWSRSAAlgorithm.signDigestWithPrivateKey(this.header.algorithm, privateKey))
 }
 
 fun <T: JWSHMACAlgorithm> JWT<T>.sign(secret: String): Either<JWTSignError, SignedJWT<T>> {
