@@ -8,6 +8,7 @@ object PluginIds { // please keep this sorted in sections
     const val AxionRelease = "pl.allegro.tech.build.axion-release"
     const val DependencyUpdates = "com.github.ben-manes.versions"
     const val Idea = "idea"
+    const val Protobuf = "com.google.protobuf"
     const val TaskTree = "com.dorongold.task-tree"
     const val TestLogger = "com.adarshr.test-logger"
 }
@@ -19,6 +20,7 @@ object PluginVersions { // please keep this sorted in sections
     // 3rd Party
     const val AxionRelease = "1.13.6"
     const val DependencyUpdates = "0.39.0"
+    const val Protobuf = "0.8.18"
     const val TaskTree = "2.1.0"
     const val TestLogger = "3.1.0"
 }
@@ -31,11 +33,15 @@ object Versions {
 
     // 3rd Party
     const val Arrow = "1.0.1"
+    const val GoogleKMSProtobuf = "0.93.2"
+    const val GRPC = "1.42.1"
+    const val GRPCKotlin = "1.2.0"
     const val Kotest = "4.6.3"
     const val KotestExtensionsArrow = "1.1.1"
     const val KotlinLogging = "2.0.11"
     const val Logback = "1.2.6"
     const val Nimbus = "9.15.2"
+    const val Protobuf = "3.19.1"
     const val SLF4J = "1.7.30"
 }
 
@@ -48,8 +54,23 @@ object Libraries {
     const val ArrowStack = "io.arrow-kt:arrow-stack:${Versions.Arrow}"
     const val ArrowCore = "io.arrow-kt:arrow-core"
 
-    const val NimbusJWT = "com.nimbusds:nimbus-jose-jwt:${Versions.Nimbus}"
+    const val GoogleKMSProtobuf = "com.google.api.grpc:proto-google-cloud-kms-v1:${Versions.GoogleKMSProtobuf}"
+    object GRPC {
+        const val Auth = "io.grpc:grpc-auth:${Versions.GRPC}"
+        const val Netty = "io.grpc:grpc-netty:${Versions.GRPC}"
+        const val Protobuf = "io.grpc:grpc-protobuf:${Versions.GRPC}"
+        const val ProtocJava = "io.grpc:protoc-gen-grpc-java:${Versions.GRPC}"
+        const val ProtocKotlin = "io.grpc:protoc-gen-grpc-kotlin:${Versions.GRPCKotlin}:jdk7@jar"
+        const val Stub = "io.grpc:grpc-stub:${Versions.GRPC}"
+        const val StubKotlin = "io.grpc:grpc-kotlin-stub:${Versions.GRPCKotlin}"
+    }
+    object Protobuf {
+        const val JavaUtil = "com.google.protobuf:protobuf-java-util:${Versions.Protobuf}"
+        const val Kotlin = "com.google.protobuf:protobuf-kotlin:${Versions.Protobuf}"
+        const val Protoc = "com.google.protobuf:protoc:${Versions.Protobuf}"
+    }
 
+    const val NimbusJWT = "com.nimbusds:nimbus-jose-jwt:${Versions.Nimbus}"
 
     const val Kotest = "io.kotest:kotest-runner-junit5-jvm:${Versions.Kotest}"
     const val KotestAssertions = "io.kotest:kotest-assertions-core-jvm:${Versions.Kotest}"
