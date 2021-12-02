@@ -10,6 +10,7 @@ dependencies {
         platform(Libraries.ArrowStack),
         Libraries.ArrowCore,
         Libraries.KotlinLogging,
+        Libraries.KotlinReflect,
         Libraries.KotlinXCoRoutinesCore,
         Libraries.KotlinXSerializationJSON,
     ).map {

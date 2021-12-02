@@ -19,9 +19,17 @@ class ProblemSpec: WordSpec() {
                 val jwtOpsRSA = RSAJWTOperations(
                     RSAPublicKeyProvider {
                         generateKeyPair(JWSRSA256Algorithm).first.some()
-                    }
+                    },
+                    JWSRSA256Algorithm,
+                )
+                val jwtOpsEC = ECJWTOperations(
+                    ECPublicKeyProvider {
+                        generateKeyPair(JWSES384Algorithm).first.some()
+                    },
+                    JWSES384Algorithm,
                 )
 
+                processKnownToken("eyJhbGciOiJFUzI1NiIsInR5...", jwtOpsEC)
                 processToken("eyJhbGciOiJFUzI1NiIsInR5...", jwtOpsRSA)
             }
         }
@@ -30,22 +38,25 @@ class ProblemSpec: WordSpec() {
 
 fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>processToken(jwt: String, jwtOps: JWTOperations<T, PubK, PrivK>): ClaimsValidatorResult {
     val validator = validateClaims(notBefore, expired)
-    return verify<T, PubK, PrivK>(jwt, jwtOps.keyProvider, validator)
+    return verify<T, PubK, PrivK>(jwt, jwtOps.keyProvider, jwtOps.algorithm, validator)
 }
 
-fun <T: JWSECDSAAlgorithm>processKnownToken(jwt: String, jwtOps: ECJWTOperations): ClaimsValidatorResult {
+inline fun <reified T: JWSECDSAAlgorithm>processKnownToken(jwt: String, jwtOps: ECJWTOperations<T>): ClaimsValidatorResult {
     val validator = validateClaims(notBefore, expired)
     return verify<T>(jwt, jwtOps.keyProvider, validator)
 }
 
 interface JWTOperations<T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey> {
     val keyProvider: PublicKeyProvider<PubK>
+    val algorithm: T
 }
 
-data class RSAJWTOperations(
-    override val keyProvider: PublicKeyProvider<RSAPublicKey>
+data class RSAJWTOperations<T: JWSRSAAlgorithm>(
+    override val keyProvider: PublicKeyProvider<RSAPublicKey>,
+    override val algorithm: T,
 ): JWTOperations<JWSRSAAlgorithm, RSAPublicKey, RSAPrivateKey>
 
-data class ECJWTOperations(
-    override val keyProvider: PublicKeyProvider<ECPublicKey>
+data class ECJWTOperations<T: JWSECDSAAlgorithm>(
+    override val keyProvider: PublicKeyProvider<ECPublicKey>,
+    override val algorithm: T,
 ): JWTOperations<JWSECDSAAlgorithm, ECPublicKey, ECPrivateKey>

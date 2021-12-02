@@ -5,6 +5,7 @@ import arrow.core.computations.either
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
+import kotlin.reflect.typeOf
 import kotlinx.serialization.Serializable
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -232,6 +233,24 @@ private fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: Pri
         signer.update(data)
         signer.sign()
     }.mapLeft { KJWTSignError.SigningError(it) }
+}
+
+inline fun <reified T: JWSAlgorithm>algorithm(): T {
+    return when (typeOf<T>()) {
+        (typeOf<JWSHMAC256Algorithm>()) -> JWSHMAC256Algorithm as T
+        (typeOf<JWSHMAC384Algorithm>()) -> JWSHMAC384Algorithm as T
+        (typeOf<JWSHMAC512Algorithm>()) -> JWSHMAC512Algorithm as T
+        (typeOf<JWSRSA256Algorithm>()) -> JWSRSA256Algorithm as T
+        (typeOf<JWSRSA384Algorithm>()) -> JWSRSA384Algorithm as T
+        (typeOf<JWSRSA512Algorithm>()) -> JWSRSA512Algorithm as T
+        (typeOf<JWSES256Algorithm>()) -> JWSES256Algorithm as T
+        (typeOf<JWSES256KAlgorithm>()) -> JWSES256KAlgorithm as T
+        (typeOf<JWSES384Algorithm>()) -> JWSES384Algorithm as T
+        (typeOf<JWSES512Algorithm>()) -> JWSES512Algorithm as T
+        else -> {
+            throw IllegalArgumentException("unknown algorithm: ${typeOf<T>()}")
+        }
+    }
 }
 
 fun derToJOSE(derSignature: ByteArray, outputLength: Int): Either<Throwable, ByteArray> {

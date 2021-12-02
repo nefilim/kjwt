@@ -24,6 +24,7 @@ import io.github.nefilim.kjwt.JWT.Companion.rs256
 import io.github.nefilim.kjwt.JWT.Companion.rs384
 import io.github.nefilim.kjwt.JWT.Companion.rs512
 import io.kotest.assertions.arrow.core.shouldBeInvalid
+import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.core.shouldBeSome
 import io.kotest.assertions.arrow.core.shouldBeValid
@@ -74,7 +75,7 @@ class JWTSpec: WordSpec() {
                 jwtWithKeyID.encode() shouldBe "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0"
             }
 
-            "decode" {
+            "decode and decodeT" {
                 val rawJWT = es256 {
                     subject("1234567890")
                     claim("name", "John Doe")
@@ -93,15 +94,23 @@ class JWTSpec: WordSpec() {
                     it.parts.size shouldBe 3
                     it.jwt shouldBe rawJWT
                 }
+
+                JWT.decodeT(signedJWT.rendered, JWSES256Algorithm).shouldBeRight().also {
+                    it.parts.size shouldBe 3
+                    it.jwt shouldBe rawJWT
+                }
+
+                JWT.decodeT(signedJWT.rendered, JWSRSA256Algorithm).shouldBeLeft(KJWTVerificationError.AlgorithmMismatch)
             }
 
             "sign & verify supported elliptical signatures" {
                 listOf(
-                    ::es256,
-                    ::es256k,
-                    ::es384,
-                    ::es512,
-                ).forEach { createJWT ->
+                    ::es256 to JWSES256Algorithm,
+                    ::es256k to JWSES256KAlgorithm,
+                    ::es384 to JWSES384Algorithm,
+                    ::es512 to JWSES512Algorithm,
+                ).forEach { pair ->
+                    val createJWT = pair.first
                     val rawJWT = createJWT(JWTKeyID("123")) {
                         subject("1234567890")
                         issuer("nefilim")
@@ -116,18 +125,18 @@ class JWTSpec: WordSpec() {
                     signedJWT.shouldBeRight().also {
                         println(it.rendered)
                         NimbusSignedJWT.parse(it.rendered).verify(ECDSAVerifier(publicKey)) shouldBe true
-                        verifySignature<JWSECDSAAlgorithm>(it.rendered, publicKey).shouldBeRight() shouldBe it.jwt
+                        verifySignature(it.rendered, publicKey, pair.second).shouldBeRight() shouldBe it.jwt
                     }
                 }
             }
 
             "sign & verify supported RSA signatures" {
                 listOf(
-                    ::rs256,
-                    ::rs384,
-                    ::rs512,
-                ).forEach { createJWT ->
-                    val rawJWT = createJWT(null) {
+                    ::rs256 to JWSRSA256Algorithm,
+                    ::rs384 to JWSRSA384Algorithm,
+                    ::rs512 to JWSRSA512Algorithm,
+                ).forEach { pair ->
+                    val rawJWT = pair.first(null) {
                         subject("1234567890")
                         claim("name", "John Doe")
                         claim("admin", true)
@@ -139,7 +148,7 @@ class JWTSpec: WordSpec() {
                     val signedJWT = rawJWT.sign(privateKey)
                     signedJWT.shouldBeRight().also {
                         NimbusSignedJWT.parse(it.rendered).verify(RSASSAVerifier(publicKey)) shouldBe true
-                        verifySignature<JWSRSAAlgorithm>(it.rendered, publicKey).shouldBeRight() shouldBe it.jwt
+                        verifySignature(it.rendered, publicKey, pair.second).shouldBeRight() shouldBe it.jwt
                     }
                 }
             }
@@ -168,8 +177,6 @@ class JWTSpec: WordSpec() {
             }
 
             "fail for mismatched algorithm & key" {
-                val (_, privateKey) = generateKeyPair(JWSES256Algorithm)
-                val (badPublicKey, badPrivateKey) = generateKeyPair(JWSRSA256Algorithm)
 
                 val jwt = es256() {
                     subject("1234567890")
@@ -179,12 +186,12 @@ class JWTSpec: WordSpec() {
                 }
 
                 // below stanzas should NOT compile, type system should prevent you from signing a JWT with the wrong kind of key
-                // jwt.sign(badPrivateKey, JWSRSA256Algorithm)  
+                // val (badPublicKey, badPrivateKey) = generateKeyPair(JWSRSA256Algorithm)
+                // jwt.sign(badPrivateKey, JWSRSA256Algorithm)
                 // jwt.sign(badPrivateKey, JWSES256Algorithm)
-
-//                jwt.sign(privateKey).shouldBeRight().also {
-//                    verifySignature<JWSRSAAlgorithm>(it.rendered, badPublicKey).shouldBeLeft() shouldBe KJWTVerificationError.AlgorithmMismatch
-//                }
+                // jwt.sign(privateKey).shouldBeRight().also {
+                //    verifySignature<JWSRSAAlgorithm>(it.rendered, badPublicKey).shouldBeLeft() shouldBe KJWTVerificationError.AlgorithmMismatch
+                // }
             }
 
             "support standard validations" {

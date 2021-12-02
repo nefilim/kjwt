@@ -119,23 +119,43 @@ class JWT<T: JWSAlgorithm> private constructor(
         }
 
         fun decode(jwt: String): Either<KJWTVerificationError, DecodedJWT<out JWSAlgorithm>> {
-            return decodeT(jwt)
-        }
-
-        fun <T: JWSAlgorithm>decodeT(jwt: String): Either<KJWTVerificationError, DecodedJWT<T>> {
             return either.eager {
                 val parts = jwt.split(".")
                 Either.conditionally (!(parts.size < 2 || parts.size > 3), { KJWTVerificationError.InvalidJWT }, {}).bind()
 
-                @Suppress("UNCHECKED_CAST")
                 val h = Either.catch {
-                    format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0])) as JOSEHeader<T>
+                    format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
                 }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
                 val claims = Either.catch { format.parseToJsonElement(jwtDecodeString(parts[1])) }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
                 val claimsMap = Either.catch { (claims as JsonObject) }.mapLeft { KJWTVerificationError.EmptyClaims }.bind()
 
                 DecodedJWT(JWT(h, claimsMap), parts)
             }
+        }
+
+        fun <T: JWSAlgorithm>decodeT(jwt: String, algorithm: T): Either<KJWTVerificationError, DecodedJWT<T>> {
+            return either.eager {
+                val decodedJWT = decode(jwt).bind()
+                Either.conditionally(decodedJWT.jwt.header.algorithm == algorithm, { KJWTVerificationError.AlgorithmMismatch }, { }).bind()
+                @Suppress("UNCHECKED_CAST")
+                Either.catch { decodedJWT as DecodedJWT<T> }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
+            }
+//            return either.eager {
+//                val parts = jwt.split(".")
+//                Either.conditionally (!(parts.size < 2 || parts.size > 3), { KJWTVerificationError.InvalidJWT }, {}).bind()
+//
+//                @Suppress("UNCHECKED_CAST")
+//                val h = Either.catch {
+//                    val header = format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
+//                    println(header)
+//                    header as JOSEHeader<T>
+//                }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
+//                Either.conditionally(h.algorithm == algorithm, { KJWTVerificationError.AlgorithmMismatch }, {})
+//                val claims = Either.catch { format.parseToJsonElement(jwtDecodeString(parts[1])) }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
+//                val claimsMap = Either.catch { (claims as JsonObject) }.mapLeft { KJWTVerificationError.EmptyClaims }.bind()
+//
+//                DecodedJWT(JWT(h, claimsMap), parts)
+//            }
         }
     }
 

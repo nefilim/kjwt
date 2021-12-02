@@ -36,8 +36,8 @@ object Versions {
     const val GoogleKMSProtobuf = "0.93.2"
     const val GRPC = "1.42.1"
     const val GRPCKotlin = "1.2.0"
-    const val Kotest = "4.6.3"
-    const val KotestExtensionsArrow = "1.1.1"
+    const val Kotest = "5.0.1"
+    const val KotestExtensionsArrow = "1.2.0"
     const val KotlinLogging = "2.0.11"
     const val Logback = "1.2.6"
     const val Nimbus = "9.15.2"
@@ -47,6 +47,7 @@ object Versions {
 
 object Libraries {
     // Kotlin
+    const val KotlinReflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.Kotlin}"
     const val KotlinXCoRoutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.KotlinXCoroutines}"
     const val KotlinXSerializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.KotlinXSerialization}"
 
