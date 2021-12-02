@@ -22,7 +22,7 @@ The following [Algorithms](https://datatracker.ietf.org/doc/html/rfc7518) are su
 
 Include the following dependency: `io.github.nefilim.kjwt:kjwt-core:0.1.8` in your build. 
 
-For Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms:0.1.8`. Documentation TODO. 
+For Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.1.8`. Documentation TODO. 
 
 ## Creating a JWT
 

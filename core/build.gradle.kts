@@ -27,7 +27,12 @@ dependencies {
 }
 
 signing {
-    sign(publishing.publications)
+    val skipSigning = findProperty("skipSigning")?.let { (it as String).toBoolean() } ?: false
+    if (!skipSigning)
+        sign(publishing.publications)
+    else {
+        logger.warn("skipping signing")
+    }
 }
 
 publishing {

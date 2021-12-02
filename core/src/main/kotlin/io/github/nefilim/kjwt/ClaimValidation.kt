@@ -11,45 +11,45 @@ import arrow.core.zip
 import arrow.typeclasses.Semigroup
 import java.time.LocalDateTime
 
-sealed interface JWTValidationError: JWTVerificationError {
-    object TokenExpired: JWTValidationError
-    object TokenNotValidYet: JWTValidationError
-    object InvalidIssuer: JWTValidationError
-    object InvalidSubject: JWTValidationError
-    object InvalidAudience: JWTValidationError
-    data class RequiredClaimIsMissing(val name: String): JWTValidationError
-    data class RequiredClaimIsInvalid(val name: String): JWTValidationError
+sealed interface KJWTValidationError: KJWTVerificationError {
+    object TokenExpired: KJWTValidationError
+    object TokenNotValidYet: KJWTValidationError
+    object InvalidIssuer: KJWTValidationError
+    object InvalidSubject: KJWTValidationError
+    object InvalidAudience: KJWTValidationError
+    data class RequiredClaimIsMissing(val name: String): KJWTValidationError
+    data class RequiredClaimIsInvalid(val name: String): KJWTValidationError
 }
 
-typealias ClaimsValidatorResult = ValidatedNel<out JWTVerificationError, JWTClaims>
+typealias ClaimsValidatorResult = ValidatedNel<out KJWTVerificationError, JWTClaims>
 typealias ClaimsValidator = (JWTClaims) -> ClaimsValidatorResult
 
 object ClaimsVerification {
-    fun issuer(issuer: String): ClaimsValidator = requiredOptionClaim("issuer", { issuer() }, { it == issuer }, JWTValidationError.InvalidIssuer)
+    fun issuer(issuer: String): ClaimsValidator = requiredOptionClaim("issuer", { issuer() }, { it == issuer }, KJWTValidationError.InvalidIssuer)
 
-    fun subject(subject: String): ClaimsValidator = requiredOptionClaim("subject", { subject() }, { it == subject }, JWTValidationError.InvalidSubject)
+    fun subject(subject: String): ClaimsValidator = requiredOptionClaim("subject", { subject() }, { it == subject }, KJWTValidationError.InvalidSubject)
 
-    fun audience(audience: String): ClaimsValidator = requiredOptionClaim("audience", { audience() }, { it == audience }, JWTValidationError.InvalidAudience)
+    fun audience(audience: String): ClaimsValidator = requiredOptionClaim("audience", { audience() }, { it == audience }, KJWTValidationError.InvalidAudience)
 
-    val expired: ClaimsValidator = requiredOptionClaim("expired", { expiresAt() }, { it.isAfter(LocalDateTime.now()) }, JWTValidationError.TokenExpired)
+    val expired: ClaimsValidator = requiredOptionClaim("expired", { expiresAt() }, { it.isAfter(LocalDateTime.now()) }, KJWTValidationError.TokenExpired)
 
-    val notBefore: ClaimsValidator = requiredOptionClaim("notBefore", { notBefore() }, { it.isBefore(LocalDateTime.now()) }, JWTValidationError.TokenNotValidYet)
-
-    fun <T>requiredOptionClaim(
-        name: String,
-        claim: JWTClaims.() -> Option<T>,
-        predicate: (T) -> Boolean,
-    ): ClaimsValidator = requiredOptionClaim(name, claim, predicate, JWTValidationError.RequiredClaimIsInvalid(name))
+    val notBefore: ClaimsValidator = requiredOptionClaim("notBefore", { notBefore() }, { it.isBefore(LocalDateTime.now()) }, KJWTValidationError.TokenNotValidYet)
 
     fun <T>requiredOptionClaim(
         name: String,
         claim: JWTClaims.() -> Option<T>,
         predicate: (T) -> Boolean,
-        error: JWTValidationError,
+    ): ClaimsValidator = requiredOptionClaim(name, claim, predicate, KJWTValidationError.RequiredClaimIsInvalid(name))
+
+    fun <T>requiredOptionClaim(
+        name: String,
+        claim: JWTClaims.() -> Option<T>,
+        predicate: (T) -> Boolean,
+        error: KJWTValidationError,
     ): ClaimsValidator = { claims ->
         when (claims.claim()) {
             is Some -> predicate((claims.claim() as Some<T>).value).toValidatedNel(error, claims)
-            is None -> JWTValidationError.RequiredClaimIsMissing(name).invalidNel()
+            is None -> KJWTValidationError.RequiredClaimIsMissing(name).invalidNel()
         }
     }
 
@@ -57,13 +57,13 @@ object ClaimsVerification {
         name: String,
         claim: JWTClaims.() -> Option<T>,
         predicate: (T) -> Boolean,
-    ): ClaimsValidator = optionalOptionClaim(name, claim, predicate, JWTValidationError.RequiredClaimIsInvalid(name))
+    ): ClaimsValidator = optionalOptionClaim(name, claim, predicate, KJWTValidationError.RequiredClaimIsInvalid(name))
 
     fun <T>optionalOptionClaim(
         name: String,
         claim: JWTClaims.() -> Option<T>,
         predicate: (T) -> Boolean,
-        error: JWTValidationError = JWTValidationError.RequiredClaimIsInvalid(name),
+        error: KJWTValidationError = KJWTValidationError.RequiredClaimIsInvalid(name),
     ): ClaimsValidator = { claims ->
         when (claims.claim()) {
             is Some -> predicate((claims.claim() as Some<T>).value).toValidatedNel(error, claims)
@@ -71,7 +71,7 @@ object ClaimsVerification {
         }
     }
 
-    private fun Boolean.toValidatedNel(invalid: JWTValidationError, claims: JWTClaims): ClaimsValidatorResult {
+    private fun Boolean.toValidatedNel(invalid: KJWTValidationError, claims: JWTClaims): ClaimsValidatorResult {
         return if (this)
             claims.validNel()
         else

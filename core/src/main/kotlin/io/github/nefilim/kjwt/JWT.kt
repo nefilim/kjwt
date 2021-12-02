@@ -2,8 +2,7 @@ package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.Option
-import arrow.core.left
-import arrow.core.right
+import arrow.core.computations.either
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -26,15 +25,20 @@ enum class JOSEType(val id: String) {
     JWT("JWT")
 }
 
+@JvmInline
+@Serializable
+value class JWTKeyID(val id: String)
+fun String?.toJWTKeyID(): JWTKeyID? = this?.let { JWTKeyID(it)}
+
 @Serializable
 data class JOSEHeader<T: JWSAlgorithm>(
     @SerialName("alg") @Serializable(JWSAlgorithmSerializer::class) val algorithm: T,
     @SerialName("typ") val type: JOSEType,
-    @SerialName("kid") val keyID: String? = null,
+    @SerialName("kid") val keyID: JWTKeyID? = null,
 ) {
     fun toJSON(): String {
-        return if (keyID != null && keyID.isNotBlank())
-            """{"alg":"${algorithm.headerID}","typ":"${JOSEType.JWT}","kid":"$keyID"}"""
+        return if (keyID != null && keyID.id.isNotBlank())
+            """{"alg":"${algorithm.headerID}","typ":"${JOSEType.JWT}","kid":"${keyID.id}"}"""
         else
             """{"alg":"${algorithm.headerID}","typ":"${JOSEType.JWT}"}"""
     }
@@ -45,8 +49,9 @@ interface JWTClaims {
     fun claimValueAsInt(name: String): Option<Int>
     fun claimValueAsLong(name: String): Option<Long>
     fun claimValueAsBoolean(name: String): Option<Boolean>
+    fun claimValueAsList(name: String): List<String>
 
-    fun keyID(): Option<String>
+    fun keyID(): Option<JWTKeyID>
     fun issuer(): Option<String>
     fun subject(): Option<String>
     fun audience(): Option<String>
@@ -93,18 +98,18 @@ class JWT<T: JWSAlgorithm> private constructor(
             prettyPrint = true
         }
 
-        fun es256(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256Algorithm> = buildJWT(JOSEHeader(JWSES256Algorithm, JOSEType.JWT, keyID), claims)
-        fun es256k(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256KAlgorithm> = buildJWT(JOSEHeader(JWSES256KAlgorithm, JOSEType.JWT, keyID), claims)
-        fun es384(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES384Algorithm> = buildJWT(JOSEHeader(JWSES384Algorithm, JOSEType.JWT, keyID), claims)
-        fun es512(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES512Algorithm> = buildJWT(JOSEHeader(JWSES512Algorithm, JOSEType.JWT, keyID), claims)
+        fun es256(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256Algorithm> = buildJWT(JOSEHeader(JWSES256Algorithm, JOSEType.JWT, keyID), claims)
+        fun es256k(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256KAlgorithm> = buildJWT(JOSEHeader(JWSES256KAlgorithm, JOSEType.JWT, keyID), claims)
+        fun es384(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES384Algorithm> = buildJWT(JOSEHeader(JWSES384Algorithm, JOSEType.JWT, keyID), claims)
+        fun es512(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES512Algorithm> = buildJWT(JOSEHeader(JWSES512Algorithm, JOSEType.JWT, keyID), claims)
 
-        fun rs256(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA256Algorithm> = buildJWT(JOSEHeader(JWSRSA256Algorithm, JOSEType.JWT, keyID), claims)
-        fun rs384(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA384Algorithm> = buildJWT(JOSEHeader(JWSRSA384Algorithm, JOSEType.JWT, keyID), claims)
-        fun rs512(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA512Algorithm> = buildJWT(JOSEHeader(JWSRSA512Algorithm, JOSEType.JWT, keyID), claims)
+        fun rs256(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA256Algorithm> = buildJWT(JOSEHeader(JWSRSA256Algorithm, JOSEType.JWT, keyID), claims)
+        fun rs384(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA384Algorithm> = buildJWT(JOSEHeader(JWSRSA384Algorithm, JOSEType.JWT, keyID), claims)
+        fun rs512(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSRSA512Algorithm> = buildJWT(JOSEHeader(JWSRSA512Algorithm, JOSEType.JWT, keyID), claims)
 
-        fun hs256(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC256Algorithm> = buildJWT(JOSEHeader(JWSHMAC256Algorithm, JOSEType.JWT, keyID), claims)
-        fun hs384(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC384Algorithm> = buildJWT(JOSEHeader(JWSHMAC384Algorithm, JOSEType.JWT, keyID), claims)
-        fun hs512(keyID: String? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC512Algorithm> = buildJWT(JOSEHeader(JWSHMAC512Algorithm, JOSEType.JWT, keyID), claims)
+        fun hs256(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC256Algorithm> = buildJWT(JOSEHeader(JWSHMAC256Algorithm, JOSEType.JWT, keyID), claims)
+        fun hs384(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC384Algorithm> = buildJWT(JOSEHeader(JWSHMAC384Algorithm, JOSEType.JWT, keyID), claims)
+        fun hs512(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSHMAC512Algorithm> = buildJWT(JOSEHeader(JWSHMAC512Algorithm, JOSEType.JWT, keyID), claims)
 
         private fun <T: JWSAlgorithm>buildJWT(header: JOSEHeader<T>, claims: JWTClaimSetBuilder.() -> Unit): JWT<T> {
             val builder = JWTClaimSetBuilder()
@@ -113,17 +118,24 @@ class JWT<T: JWSAlgorithm> private constructor(
             return JWT(header, builder.build())
         }
 
-        fun decode(jwt: String): Either<JWTVerificationError, DecodedJWT<out JWSAlgorithm>> {
-            val parts = jwt.split(".")
-            if (parts.size < 2 || parts.size > 3)
-                return JWTVerificationError.InvalidJWT.left()
+        fun decode(jwt: String): Either<KJWTVerificationError, DecodedJWT<out JWSAlgorithm>> {
+            return decodeT(jwt)
+        }
 
-            val h = format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
-            val claims = format.parseToJsonElement(jwtDecodeString(parts[1]))
-            if (claims !is JsonObject)
-                return JWTVerificationError.EmptyClaims.left()
+        fun <T: JWSAlgorithm>decodeT(jwt: String): Either<KJWTVerificationError, DecodedJWT<T>> {
+            return either.eager {
+                val parts = jwt.split(".")
+                Either.conditionally (!(parts.size < 2 || parts.size > 3), { KJWTVerificationError.InvalidJWT }, {}).bind()
 
-            return DecodedJWT(JWT(h, claims.toMap()), parts).right()
+                @Suppress("UNCHECKED_CAST")
+                val h = Either.catch {
+                    format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0])) as JOSEHeader<T>
+                }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
+                val claims = Either.catch { format.parseToJsonElement(jwtDecodeString(parts[1])) }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
+                val claimsMap = Either.catch { (claims as JsonObject) }.mapLeft { KJWTVerificationError.EmptyClaims }.bind()
+
+                DecodedJWT(JWT(h, claimsMap), parts)
+            }
         }
     }
 
@@ -150,8 +162,9 @@ class JWT<T: JWSAlgorithm> private constructor(
     override fun claimValueAsInt(name: String): Option<Int> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.intOrNull)
     override fun claimValueAsLong(name: String): Option<Long> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.longOrNull)
     override fun claimValueAsBoolean(name: String): Option<Boolean> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.booleanOrNull)
+    override fun claimValueAsList(name: String): List<String> = claimSet[name]?.jsonPrimitive?.contentOrNull?.split(",")?.map { it.trim() } ?: emptyList()
 
-    override fun keyID(): Option<String> = Option.fromNullable(header.keyID)
+    override fun keyID(): Option<JWTKeyID> = Option.fromNullable(header.keyID)
     override fun issuer(): Option<String> = claimValue("iss")
     override fun subject(): Option<String> = claimValue("sub")
     override fun audience(): Option<String> = claimValue("aud")
@@ -159,10 +172,6 @@ class JWT<T: JWSAlgorithm> private constructor(
     override fun notBefore(): Option<LocalDateTime> = claimValueAsLong("nbf").map { it.fromJWTNumericDate() }
     override fun issuedAt(): Option<LocalDateTime> = claimValueAsLong("iat").map { it.fromJWTNumericDate() }
     override fun jwtID(): Option<String> = claimValue("jti")
-
-    fun setKeyID(keyID: String): JWT<T> {
-        return JWT(header.copy(keyID = keyID), claimSet)
-    }
 
     // generated
     override fun equals(other: Any?): Boolean {
@@ -205,7 +214,7 @@ data class SignedJWT<T: JWSAlgorithm>(
 // https://datatracker.ietf.org/doc/html/rfc7519#section-2
 internal fun LocalDateTime.jwtNumericDate(): Long = this.toEpochSecond(ZoneOffset.UTC)
 internal fun Long.fromJWTNumericDate(): LocalDateTime = LocalDateTime.ofEpochSecond(this, 0, ZoneOffset.UTC)
-internal fun jwtEncodeBytes(data: ByteArray): String = String(Base64.getUrlEncoder().encode(data)).trimEnd('=') // remove trailing '=' as per JWT spec
-internal fun jwtDecodeString(data: String): String = String(Base64.getUrlDecoder().decode(data))
+fun jwtEncodeBytes(data: ByteArray): String = String(Base64.getUrlEncoder().encode(data)).trimEnd('=') // remove trailing '=' as per JWT spec
+fun jwtDecodeString(data: String): String = String(Base64.getUrlDecoder().decode(data))
 internal fun decodeString(data: String): ByteArray = Base64.getUrlDecoder().decode(data)
 internal fun stringToBytes(data: String): Either<Throwable, ByteArray> = Either.catch { data.toByteArray(Charsets.UTF_8) }

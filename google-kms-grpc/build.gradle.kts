@@ -23,7 +23,15 @@ dependencies {
         Libraries.Protobuf.Kotlin,
         Libraries.Protobuf.JavaUtil,
     ).map {
-        implementation(it)
+        api(it)
+    }
+
+    listOf(
+        Libraries.Kotest,
+        Libraries.KotestAssertions,
+        Libraries.KotestAssertionsArrow,
+    ).map {
+        testImplementation(it)
     }
 }
 
@@ -53,7 +61,12 @@ protobuf {
 }
 
 signing {
-    sign(publishing.publications)
+    val skipSigning = findProperty("skipSigning")?.let { (it as String).toBoolean() } ?: false
+    if (!skipSigning)
+        sign(publishing.publications)
+    else {
+        logger.warn("skipping signing")
+    }
 }
 
 publishing {
@@ -71,7 +84,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             pom {
-                name.set("kjwt-google-kms")
+                name.set("kjwt-google-kms-grpc")
                 description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
                 url.set("https://github.com/nefilim/kjwt")
                 licenses {
@@ -92,7 +105,7 @@ publishing {
                     url.set("https://github.com/nefilim/kjwt")
                 }
             }
-            artifactId = "kjwt-google-kms"
+            artifactId = "kjwt-google-kms-grpc"
             groupId = project.group.toString()
             version = project.version.toString()
             from(components["java"])

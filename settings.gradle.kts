@@ -9,5 +9,5 @@ pluginManagement {
 
 include(
     "core",
-    "google-kms",
+    "google-kms-grpc",
 )

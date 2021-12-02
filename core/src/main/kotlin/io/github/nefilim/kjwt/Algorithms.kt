@@ -11,84 +11,61 @@ import java.security.PublicKey
 import java.security.Signature
 import java.security.SignatureException
 import java.security.interfaces.ECPrivateKey
+import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
+import java.security.spec.RSAKeyGenParameterSpec
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-sealed interface JWTSignError {
-    object InvalidKey: JWTSignError
-    object InvalidJWT: JWTSignError
-    object KeyAlgorithmMismatch: JWTSignError
-    data class SigningError(val cause: Throwable): JWTSignError
+sealed interface KJWTError
+
+sealed interface KJWTSignError: KJWTError {
+    object InvalidKey: KJWTSignError
+    object InvalidJWTData: KJWTSignError
+    data class SigningError(val cause: Throwable): KJWTSignError
 }
 
-sealed interface JWTVerificationError {
-    object InvalidJWT: JWTVerificationError
-    object AlgorithmMismatch: JWTVerificationError
-    object KeyAlgorithmMismatch: JWTVerificationError
-    object BrokenSignature: JWTVerificationError
-    object InvalidSignature: JWTVerificationError
-    object MissingSignature: JWTVerificationError
-    object EmptyClaims: JWTVerificationError
+sealed interface KJWTVerificationError: KJWTError {
+    object InvalidJWT: KJWTVerificationError
+    object MissingKeyID: KJWTVerificationError
+    object AlgorithmMismatch: KJWTVerificationError
+    object KeyAlgorithmMismatch: KJWTVerificationError
+    object BrokenSignature: KJWTVerificationError
+    object InvalidSignature: KJWTVerificationError
+    object MissingSignature: KJWTVerificationError
+    object EmptyClaims: KJWTVerificationError
 }
 
-typealias SignEncodedJWT = suspend (String) -> Either<JWTSignError, ByteArray>
+typealias SignEncodedJWT = suspend (String) -> Either<KJWTSignError, ByteArray>
 
 sealed interface JWSAlgorithm {
     val headerID: String
     val algorithmName: String
+    val jwtCreator: (JWTKeyID?, (JWT.Companion.JWTClaimSetBuilder.() -> Unit)) -> JWT<*>
 }
 sealed interface JWSSymmetricAlgorithm: JWSAlgorithm {
-    fun <T: JWSSymmetricAlgorithm>sign(jwt: JWT<T>, secret: String): Either<JWTSignError, SignedJWT<T>> {
-        return either.eager<JWTSignError, ByteArray> {
-            val nonBlankSecret = Either.conditionally(secret.isNotBlank(), { JWTSignError.InvalidKey }, { secret }).bind()
-            val secretBytes = stringToBytes(nonBlankSecret).mapLeft { JWTSignError.InvalidKey }.bind()
-            val dataToSign = stringToBytes(jwt.encode()).mapLeft { JWTSignError.InvalidJWT }.bind()
+    fun <T: JWSSymmetricAlgorithm>sign(jwt: JWT<T>, secret: String): Either<KJWTSignError, SignedJWT<T>> {
+        return either.eager<KJWTSignError, ByteArray> {
+            val nonBlankSecret = Either.conditionally(secret.isNotBlank(), { KJWTSignError.InvalidKey }, { secret }).bind()
+            val secretBytes = stringToBytes(nonBlankSecret).mapLeft { KJWTSignError.InvalidKey }.bind()
+            val dataToSign = stringToBytes(jwt.encode()).mapLeft { KJWTSignError.InvalidJWTData }.bind()
             Either.catch {
                 val mac = Mac.getInstance(jwt.header.algorithm.algorithmName)
                 mac.init(SecretKeySpec(secretBytes, jwt.header.algorithm.algorithmName))
                 mac.doFinal(dataToSign)
-            }.mapLeft { JWTSignError.SigningError(it) }.bind()
+            }.mapLeft { KJWTSignError.SigningError(it) }.bind()
         }.map {
             SignedJWT(jwt, it, jwt.header.algorithm)
         }
     }
-    fun <T: JWSSymmetricAlgorithm>verifySignature(dJWT: DecodedJWT<T>, secret: String): Either<JWTVerificationError, JWT<T>> {
-        return either.eager<JWTVerificationError, JWT<T>> {
-            val signature = Either.fromNullable(dJWT.signature()).mapLeft { JWTVerificationError.MissingSignature }.bind()
-            val signedJWT = sign(dJWT.jwt, secret).mapLeft { JWTVerificationError.InvalidJWT }.bind()
-            Either.conditionally(jwtEncodeBytes(signedJWT.signature) == signature, { JWTVerificationError.InvalidSignature }, { dJWT.jwt} ).bind()
+    fun <T: JWSSymmetricAlgorithm>verifySignature(dJWT: DecodedJWT<T>, secret: String): Either<KJWTVerificationError, JWT<T>> {
+        return either.eager<KJWTVerificationError, JWT<T>> {
+            val signature = Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.bind()
+            val signedJWT = sign(dJWT.jwt, secret).mapLeft { KJWTVerificationError.InvalidJWT }.bind()
+            Either.conditionally(jwtEncodeBytes(signedJWT.signature) == signature, { KJWTVerificationError.InvalidSignature }, { dJWT.jwt} ).bind()
         }
     }
-}
-sealed interface JWSAsymmetricAlgorithm: JWSAlgorithm {
-    fun <T: JWSAsymmetricAlgorithm>verifySignature(
-        dJWT: DecodedJWT<T>,
-        key: PublicKey,
-        signature: Either<JWTVerificationError, ByteArray>,
-    ): Either<JWTVerificationError, JWT<T>> {
-        val signer = Signature.getInstance(dJWT.jwt.header.algorithm.algorithmName)
-
-        return either.eager<JWTVerificationError, Boolean> {
-            Either.catch { signer.initVerify(key) }.mapLeft { JWTVerificationError.KeyAlgorithmMismatch }.bind()
-            val dataToVerify = Either.catch { dJWT.signedData().toByteArray() }.mapLeft { JWTVerificationError.InvalidJWT }.bind()
-            val sig = signature.bind()
-            Either.catch { signer.update(dataToVerify) }.mapLeft { JWTVerificationError.BrokenSignature }.bind()
-            Either.catch { signer.verify(sig) }.mapLeft { JWTVerificationError.BrokenSignature }.bind()
-        }.flatMap {
-            Either.conditionally(it, { JWTVerificationError.InvalidSignature }, { dJWT.jwt })
-        }
-    }
-}
-
-private fun signDigestWithGenericPrivateKey(algorithm: JWSAsymmetricAlgorithm, privateKey: PrivateKey): SignEncodedJWT = { encoded ->
-    Either.catch {
-        val data = encoded.toByteArray(Charsets.UTF_8)
-        val signer = Signature.getInstance(algorithm.algorithmName)
-        signer.initSign(privateKey, null)
-        signer.update(data)
-        signer.sign()
-    }.mapLeft { JWTSignError.SigningError(it) }
 }
 
 sealed interface JWSHMACAlgorithm: JWSSymmetricAlgorithm
@@ -96,75 +73,106 @@ sealed interface JWSHMACAlgorithm: JWSSymmetricAlgorithm
 object JWSHMAC256Algorithm: JWSHMACAlgorithm {
     override val headerID: String = "HS256"
     override val algorithmName: String = "HmacSHA256"
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSHMAC256Algorithm> = JWT.Companion::hs256
 }
 @Serializable
 object JWSHMAC384Algorithm: JWSHMACAlgorithm {
     override val headerID: String = "HS384"
     override val algorithmName: String = "HmacSHA384"
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSHMAC384Algorithm> = JWT.Companion::hs384
 }
 @Serializable
 object JWSHMAC512Algorithm: JWSHMACAlgorithm {
     override val headerID: String = "HS512"
     override val algorithmName: String = "HmacSHA512"
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSHMAC512Algorithm> = JWT.Companion::hs512
 }
 
-sealed interface JWSRSAAlgorithm: JWSAsymmetricAlgorithm {
-    suspend fun <T: JWSRSAAlgorithm>sign(jwt: JWT<T>, signDigest: SignEncodedJWT): Either<JWTSignError, SignedJWT<T>> {
-        return either<JWTSignError, ByteArray> {
-            val encoded = Either.catch { jwt.encode() }.mapLeft { JWTSignError.SigningError(it) }.bind()
+// let go of recursive type to be able to be specific in the derived interfaces (signature) to improve usability elsewhere
+//sealed interface JWSAsymmetricAlgorithm<T: JWSAsymmetricAlgorithm<T, PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>: JWSAlgorithm {
+sealed interface JWSAsymmetricAlgorithm<PubK: PublicKey, PrivK: PrivateKey>: JWSAlgorithm {
+    fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>>verifySignature(dJWT: DecodedJWT<T>, key: PubK): Either<KJWTVerificationError, JWT<T>> {
+        val signer = Signature.getInstance(dJWT.jwt.header.algorithm.algorithmName)
+
+        return either.eager<KJWTVerificationError, Boolean> {
+            Either.catch { signer.initVerify(key) }.mapLeft { KJWTVerificationError.KeyAlgorithmMismatch }.bind()
+            val dataToVerify = Either.catch { dJWT.signedData().toByteArray() }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
+            val sig = signature(dJWT).bind()
+            Either.catch { signer.update(dataToVerify) }.mapLeft { KJWTVerificationError.BrokenSignature }.bind()
+            Either.catch { signer.verify(sig) }.mapLeft { KJWTVerificationError.BrokenSignature }.bind()
+        }.flatMap {
+            Either.conditionally(it, { KJWTVerificationError.InvalidSignature }, { dJWT.jwt })
+        }
+    }
+    fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray>
+}
+
+sealed interface JWSRSAAlgorithm: JWSAsymmetricAlgorithm<RSAPublicKey, RSAPrivateKey> {
+    suspend fun <T: JWSRSAAlgorithm>sign(jwt: JWT<T>, signDigest: SignEncodedJWT): Either<KJWTSignError, SignedJWT<T>> {
+        return either<KJWTSignError, ByteArray> {
+            val encoded = Either.catch { jwt.encode() }.mapLeft { KJWTSignError.SigningError(it) }.bind()
             signDigest(encoded).bind()
         }.map { sig ->
             SignedJWT(jwt, sig, jwt.header.algorithm)
         }
     }
 
-    companion object {
-        fun <T: JWSRSAAlgorithm> signature(dJWT: DecodedJWT<T>): Either<JWTVerificationError, ByteArray> {
-            return Either.fromNullable(dJWT.signature()).mapLeft { JWTVerificationError.MissingSignature }.map { decodeString(it) }
-        }
+    override fun <T: JWSAsymmetricAlgorithm<RSAPublicKey, RSAPrivateKey>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray> {
+        return Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.map { decodeString(it) }
+    }
 
+    companion object {
         fun signDigestWithPrivateKey(algorithm: JWSRSAAlgorithm, privateKey: RSAPrivateKey): SignEncodedJWT =
             signDigestWithGenericPrivateKey(algorithm, privateKey)
     }
+
+    val keyGenSpec: RSAKeyGenParameterSpec // https://www.keylength.com/en/3/
 }
 @Serializable
 object JWSRSA256Algorithm: JWSRSAAlgorithm {
     override val headerID: String = "RS256"
     override val algorithmName: String = "SHA256withRSA"
+    override val keyGenSpec: RSAKeyGenParameterSpec = RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4)
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSRSA256Algorithm> = JWT.Companion::rs256
 }
 @Serializable
 object JWSRSA384Algorithm: JWSRSAAlgorithm {
     override val headerID: String = "RS384"
     override val algorithmName: String = "SHA384withRSA"
+    override val keyGenSpec: RSAKeyGenParameterSpec = RSAKeyGenParameterSpec(3072, RSAKeyGenParameterSpec.F4)
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSRSA384Algorithm> = JWT.Companion::rs384
 }
 @Serializable
 object JWSRSA512Algorithm: JWSRSAAlgorithm {
     override val headerID: String = "RS512"
     override val algorithmName: String = "SHA512withRSA"
+    override val keyGenSpec: RSAKeyGenParameterSpec = RSAKeyGenParameterSpec(3072, RSAKeyGenParameterSpec.F4)
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSRSA512Algorithm> = JWT.Companion::rs512
 }
 
-sealed interface JWSECDSAAlgorithm: JWSAsymmetricAlgorithm {
+sealed interface JWSECDSAAlgorithm: JWSAsymmetricAlgorithm<ECPublicKey, ECPrivateKey> {
     val curve: String
     val signatureSize: Int
 
-    suspend fun <T: JWSECDSAAlgorithm>sign(jwt: JWT<T>, signDigest: SignEncodedJWT): Either<JWTSignError, SignedJWT<T>> {
-        return either<JWTSignError, ByteArray> {
-            val encoded = Either.catch { jwt.encode() }.mapLeft { JWTSignError.SigningError(it) }.bind()
+    suspend fun <T: JWSECDSAAlgorithm>sign(jwt: JWT<T>, signDigest: SignEncodedJWT): Either<KJWTSignError, SignedJWT<T>> {
+        return either<KJWTSignError, ByteArray> {
+            val encoded = Either.catch { jwt.encode() }.mapLeft { KJWTSignError.SigningError(it) }.bind()
             val signedData = signDigest(encoded).bind()
-            derToJOSE(signedData, jwt.header.algorithm.signatureSize).mapLeft { JWTSignError.SigningError(it) }.bind()
+            derToJOSE(signedData, jwt.header.algorithm.signatureSize).mapLeft { KJWTSignError.SigningError(it) }.bind()
         }.map { sig ->
             SignedJWT(jwt, sig, jwt.header.algorithm)
         }
     }
 
-    companion object {
-        fun <T: JWSECDSAAlgorithm>signature(dJWT: DecodedJWT<T>): Either<JWTVerificationError, ByteArray> {
-            return either.eager {
-                val signatureJOSE = Either.fromNullable(dJWT.signature()).mapLeft { JWTVerificationError.MissingSignature }.bind()
-                val signatureDecoded = decodeString(signatureJOSE)
-                joseToDER(signatureDecoded).mapLeft { JWTVerificationError.InvalidJWT }.bind()
-            }
+    override fun <T: JWSAsymmetricAlgorithm<ECPublicKey, ECPrivateKey>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray> {
+        return either.eager {
+            val signatureJOSE = Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.bind()
+            val signatureDecoded = decodeString(signatureJOSE)
+            joseToDER(signatureDecoded).mapLeft { KJWTVerificationError.InvalidJWT }.bind()
         }
+    }
+
+    companion object {
 
         fun signDigestWithPrivateKey(algorithm: JWSECDSAAlgorithm, privateKey: ECPrivateKey): SignEncodedJWT =
             signDigestWithGenericPrivateKey(algorithm, privateKey)
@@ -176,6 +184,7 @@ object JWSES256Algorithm: JWSECDSAAlgorithm {
     override val algorithmName: String = "SHA256withECDSA"
     override val curve: String = "secp256r1"
     override val signatureSize: Int = 64
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSES256Algorithm> = JWT.Companion::es256
 }
 @Serializable
 object JWSES256KAlgorithm: JWSECDSAAlgorithm {
@@ -183,6 +192,7 @@ object JWSES256KAlgorithm: JWSECDSAAlgorithm {
     override val algorithmName: String = "SHA256withECDSA"
     override val curve: String = "secp256k1"
     override val signatureSize: Int = 64
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSES256KAlgorithm> = JWT.Companion::es256k
 }
 @Serializable
 object JWSES384Algorithm: JWSECDSAAlgorithm {
@@ -190,6 +200,7 @@ object JWSES384Algorithm: JWSECDSAAlgorithm {
     override val algorithmName: String = "SHA384withECDSA"
     override val curve: String = "secp384r1"
     override val signatureSize: Int = 96
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSES384Algorithm> = JWT.Companion::es384
 }
 @Serializable
 object JWSES512Algorithm: JWSECDSAAlgorithm {
@@ -197,6 +208,7 @@ object JWSES512Algorithm: JWSECDSAAlgorithm {
     override val algorithmName: String = "SHA512withECDSA"
     override val curve: String = "secp521r1"
     override val signatureSize: Int = 132
+    override val jwtCreator: (JWTKeyID?, JWT.Companion.JWTClaimSetBuilder.() -> Unit) -> JWT<JWSES512Algorithm> = JWT.Companion::es512
 }
 
 val AllAlgorithms = setOf(
@@ -211,6 +223,16 @@ val AllAlgorithms = setOf(
     JWSES384Algorithm,
     JWSES512Algorithm,
 )
+
+private fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>signDigestWithGenericPrivateKey(algorithm: JWSAsymmetricAlgorithm<PubK, PrivK>, privateKey: PrivK): SignEncodedJWT = { encoded ->
+    Either.catch {
+        val data = encoded.toByteArray(Charsets.UTF_8)
+        val signer = Signature.getInstance(algorithm.algorithmName)
+        signer.initSign(privateKey, null)
+        signer.update(data)
+        signer.sign()
+    }.mapLeft { KJWTSignError.SigningError(it) }
+}
 
 fun derToJOSE(derSignature: ByteArray, outputLength: Int): Either<Throwable, ByteArray> {
     if (derSignature.size < 8 || derSignature[0].toInt() != 0x30)

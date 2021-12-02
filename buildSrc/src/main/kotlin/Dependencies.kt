@@ -56,8 +56,6 @@ object Libraries {
 
     const val GoogleKMSProtobuf = "com.google.api.grpc:proto-google-cloud-kms-v1:${Versions.GoogleKMSProtobuf}"
     object GRPC {
-        const val Auth = "io.grpc:grpc-auth:${Versions.GRPC}"
-        const val Netty = "io.grpc:grpc-netty:${Versions.GRPC}"
         const val Protobuf = "io.grpc:grpc-protobuf:${Versions.GRPC}"
         const val ProtocJava = "io.grpc:protoc-gen-grpc-java:${Versions.GRPC}"
         const val ProtocKotlin = "io.grpc:protoc-gen-grpc-kotlin:${Versions.GRPCKotlin}:jdk7@jar"
