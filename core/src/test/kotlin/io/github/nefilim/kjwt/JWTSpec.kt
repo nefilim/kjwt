@@ -279,8 +279,32 @@ class JWTSpec: WordSpec() {
                 //    .shouldBe(setOf(KJWTVerificationError.InvalidSignature))
 
                 val validator = validateClaims(standardValidation, requiredOptionClaim("admin", { claimValueAsBoolean("admin") }, { !it }))
-                verify<JWSES256Algorithm>(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, validator).shouldBeInvalid().toSet()
-                    .shouldBe(setOf(KJWTValidationError.RequiredClaimIsInvalid("admin")))
+                verify<JWSES256Algorithm>(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, validator)
+                    .shouldBeInvalid().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsInvalid("admin"))
+            }
+
+            "overload reified algorithm for verification" {
+                val (publicKey, privateKey) = generateKeyPair(JWSES256Algorithm)
+
+                val jwt = es256(JWTKeyID("123")) {
+                    subject("1234567890")
+                    issuer("thecompany")
+                    audience("http://thecompany.com")
+                    claim("name", "John Doe")
+                    claim("admin", true)
+                    expiresAt(LocalDateTime.now().plusHours(1))
+                    notBefore(LocalDateTime.now().minusMinutes(1))
+                    issuedNow()
+                }
+
+                val standardValidation: ClaimsValidator = { claims ->
+                    validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
+                }
+                val signedJWT = jwt.sign(privateKey).shouldBeRight()
+                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()
+
+                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES512Algorithm)
+                    .shouldBeInvalid().toSet() shouldBe setOf(KJWTVerificationError.AlgorithmMismatch)
             }
         }
     }

@@ -24,6 +24,8 @@ Include the following dependency: `io.github.nefilim.kjwt:kjwt-core:0.3.0` in yo
 
 For Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.3.0`. Documentation TODO. 
 
+For examples see: [JWTSpec.kt](https://github.com/nefilim/kjwt/blob/main/core/src/test/kotlin/io/github/nefilim/kjwt/JWTSpec.kt) 
+
 ## Creating a JWT
 
 ```kotlin
@@ -69,6 +71,11 @@ contains the encoded string representation, in this case:
 ```kotlin
 JWT.decode("eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoibmVmaWxpbSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjJ9.glaZCoqhNE7TiPLZl2hDK18yZGJUyVW0cE8pTM-zggyVfROiMPQJlImVcPSxTd50A8NRDOhoZwrqX04K4QS1bQ")
 ```
+If the algorithm is known and expected:
+
+```kotlin
+JWT.decodeT("eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIs...", JWSES256Algorithm)
+```
 
 The resulting `DecodedJWT` contains a `JWT<JWSES256Algorithm>` and the individual (3) parts of the JWT. Public 
 claims can be accessed via the predefined accessors, eg:
@@ -80,7 +87,12 @@ JWT.decode("...").tap {
 }
 ```
 
-private claims be accessed with `claimValue`/`claimValueAsBoolean`/`claimValueAsLong` etc.
+private claims be accessed with 
+ * `claimValue`
+ * `claimValueAsBoolean`
+ * `claimValueAsLong` 
+
+etc.
 
 # Validating a JWT
 
