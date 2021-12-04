@@ -11,6 +11,7 @@ plugins {
     id(PluginIds.DependencyUpdates) version PluginVersions.DependencyUpdates
     id(PluginIds.Idea)
     id(PluginIds.AxionRelease) version PluginVersions.AxionRelease
+    id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
 }
 
 buildscript {
@@ -22,6 +23,15 @@ buildscript {
 repositories {
     mavenLocal()
     mavenCentral()
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {  
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
 }
 
 allprojects {

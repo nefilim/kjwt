@@ -37,17 +37,6 @@ signing {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "OSSRH"
-            url = uri(repoURL())
-            credentials {
-                username = System.getenv("OSSRH_USER")
-                password = System.getenv("OSSRH_PASSWORD") 
-            }
-        }
-    }
-
     publications {
         create<MavenPublication>("mavenJava") {
             pom {

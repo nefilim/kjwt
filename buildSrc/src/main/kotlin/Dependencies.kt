@@ -7,6 +7,7 @@ object PluginIds { // please keep this sorted in sections
     // 3rd Party
     const val AxionRelease = "pl.allegro.tech.build.axion-release"
     const val DependencyUpdates = "com.github.ben-manes.versions"
+    const val GradleNexusPublish = "io.github.gradle-nexus.publish-plugin"
     const val Idea = "idea"
     const val Protobuf = "com.google.protobuf"
     const val TaskTree = "com.dorongold.task-tree"
@@ -20,6 +21,7 @@ object PluginVersions { // please keep this sorted in sections
     // 3rd Party
     const val AxionRelease = "1.13.6"
     const val DependencyUpdates = "0.39.0"
+    const val GradleNexusPublish = "1.1.0"
     const val Protobuf = "0.8.18"
     const val TaskTree = "2.1.0"
     const val TestLogger = "3.1.0"
@@ -33,12 +35,12 @@ object Versions {
 
     // 3rd Party
     const val Arrow = "1.0.1"
-    const val GoogleKMSProtobuf = "0.93.2"
+    const val GoogleKMSProtobuf = "0.94.0"
     const val GRPC = "1.42.1"
     const val GRPCKotlin = "1.2.0"
     const val Kotest = "5.0.1"
     const val KotestExtensionsArrow = "1.2.0"
-    const val KotlinLogging = "2.0.11"
+    const val KotlinLogging = "2.1.0"
     const val Logback = "1.2.6"
     const val Nimbus = "9.15.2"
     const val Protobuf = "3.19.1"
