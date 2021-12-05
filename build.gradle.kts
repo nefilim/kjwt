@@ -1,7 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
-import pl.allegro.tech.build.axion.release.domain.properties.TagProperties
 
 plugins {
     kotlin("jvm") version PluginVersions.Kotlin
@@ -10,7 +8,7 @@ plugins {
     id(PluginIds.TestLogger) version PluginVersions.TestLogger
     id(PluginIds.DependencyUpdates) version PluginVersions.DependencyUpdates
     id(PluginIds.Idea)
-    id(PluginIds.AxionRelease) version PluginVersions.AxionRelease
+    id(PluginIds.Reckon) version PluginVersions.Reckon
     id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
 }
 
@@ -25,6 +23,11 @@ repositories {
     mavenCentral()
 }
 
+reckon {
+    scopeFromProp()
+    stageFromProp("milestone", "rc", "final")
+}
+
 nexusPublishing {
     repositories {
         sonatype {  
@@ -36,16 +39,8 @@ nexusPublishing {
 
 allprojects {
     apply(plugin = PluginIds.DependencyUpdates)
-    apply(plugin = PluginIds.AxionRelease)
-
-    scmVersion {
-        tag.prefix = "v"
-        tag.initialVersion = KotlinClosure2<TagProperties, ScmPosition, String>({ config, position -> "0.1.0" })
-        versionIncrementer("incrementPatch")
-    }
 
     group = "io.github.nefilim.kjwt"
-    version = scmVersion.version
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = JavaVersion.VERSION_11.toString()
