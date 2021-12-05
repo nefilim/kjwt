@@ -25,7 +25,7 @@ repositories {
 
 reckon {
     scopeFromProp()
-    stageFromProp("milestone", "rc", "final")
+    stageFromProp("milestone", "final")
 }
 
 nexusPublishing {
