@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
@@ -214,6 +215,7 @@ object CachedJWKSProvider {
     suspend fun <P: PublicKey>JWKSProvider<P>.cached(
         refreshInterval: Duration = 5.minutes,
         coroutineScope: CoroutineScope,
+        onCompletion: FlowCollector<Either<JWKError, Map<JWTKeyID, P>>>.(Throwable?) -> Unit = { },
     ): JWKSProvider<P> {
         val parentProvider = this
         val msf = MutableStateFlow(parentProvider())
@@ -225,7 +227,7 @@ object CachedJWKSProvider {
             }
         }
             .onEach { msf.emit(it) }
-            .onCompletion { println("CachedJWKSProvider FINISHED!") }
+            .onCompletion { onCompletion(it) }
             .launchIn(coroutineScope)
 
         return JWKSProvider {
