@@ -65,7 +65,7 @@ class JWKSSpec: WordSpec() {
         "CachedJWKS" should {
             "refresh cache" {
                 val keyID = JWTKeyID(UUID.randomUUID().toString())
-                with (randomJWKS<RSAPublicKey>(keyID).cached(10.milliseconds, GlobalScope)) {
+                with (randomJWKS<RSAPublicKey>(keyID).cached(0.milliseconds, GlobalScope)) {
                     var previousKey: RSAPublicKey? = null
                     repeat(10) {
                         this().shouldBeRight()
@@ -74,7 +74,7 @@ class JWKSSpec: WordSpec() {
                             it shouldNotBe (previousKey)
                             previousKey = it
                         }
-                        delay(300.milliseconds)
+                        delay(350.milliseconds)
                     }
                 }
             }

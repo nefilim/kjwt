@@ -169,6 +169,10 @@ object WellKnownJWKSProvider {
         val headers: Map<String, String> = emptyMap(),
     ) {
         val wellKnownURL = URL(url)
+
+        companion object {
+            fun standardsWellKnownURL(url: String): String = "${url.trimEnd('/')}/.well-known/jwks.json"
+        }
     }
 
     val json = Json {
