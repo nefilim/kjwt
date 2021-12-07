@@ -60,7 +60,7 @@ publishing {
                     url.set("https://github.com/nefilim/kjwt")
                 }
             }
-            artifactId = "kjwt-google-kms-grpc"
+            artifactId = "kjwt-jwks"
             groupId = project.group.toString()
             version = project.version.toString()
             from(components["java"])
