@@ -10,4 +10,5 @@ pluginManagement {
 include(
     "core",
     "google-kms-grpc",
+    "jwks",
 )
