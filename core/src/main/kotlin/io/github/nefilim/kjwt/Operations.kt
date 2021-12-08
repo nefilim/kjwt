@@ -31,13 +31,13 @@ fun <T: JWSHMACAlgorithm> JWT<T>.sign(secret: String): Either<KJWTSignError, Sig
 
 // have to use fun interfaces to disambiguate the JVM signatures, a type parameter (eg a function) would be erased at runtime
 fun interface PublicKeyProvider<R: PublicKey> {
-    operator fun invoke(keyID: JWTKeyID): Option<R>
+    suspend operator fun invoke(keyID: JWTKeyID): Option<R>
 }
 fun interface RSAPublicKeyProvider: PublicKeyProvider<RSAPublicKey> {
-    override operator fun invoke(keyID: JWTKeyID): Option<RSAPublicKey>
+    override suspend operator fun invoke(keyID: JWTKeyID): Option<RSAPublicKey>
 }
 fun interface ECPublicKeyProvider: PublicKeyProvider<ECPublicKey> {
-    override operator fun invoke(keyID: JWTKeyID): Option<ECPublicKey>
+    override suspend operator fun invoke(keyID: JWTKeyID): Option<ECPublicKey>
 }
 
 // ------- [ Generic Asymmetric ]-----
@@ -68,16 +68,16 @@ fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>
         it
     })
 }
-fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<PubK>, validator: ClaimsValidator): ClaimsValidatorResult {
-    val publicKey = option.eager<PubK> {
+suspend fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<PubK>, validator: ClaimsValidator): ClaimsValidatorResult {
+    val publicKey = option<PubK> {
         val keyID = decodedJWT.keyID().bind()
         keyProvider(keyID).bind()
     }.toEither { KJWTVerificationError.MissingKeyID }.toValidatedNel()
     return publicKey.andThen { verify(decodedJWT, it, validator) }
 }
-fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verify(jwt: String, keyProvider: PublicKeyProvider<PubK>, algorithm: T, validator: ClaimsValidator): ClaimsValidatorResult {
+suspend fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verify(jwt: String, keyProvider: PublicKeyProvider<PubK>, algorithm: T, validator: ClaimsValidator): ClaimsValidatorResult {
     return JWT.decodeT<T>(jwt, algorithm).toValidatedNel().andThen { decodedJWT ->
-        option.eager<Pair<DecodedJWT<T>, PubK>> {
+        option<Pair<DecodedJWT<T>, PubK>> {
             val keyID = decodedJWT.keyID().bind()
             val key = keyProvider(keyID).bind()
             decodedJWT to key
@@ -89,38 +89,38 @@ fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>
 fun <T: JWSRSAAlgorithm>verifySignature(decodedJWT: DecodedJWT<T>, key: RSAPublicKey): Either<KJWTVerificationError, JWT<T>> {
     return verifySignature<T, RSAPublicKey, RSAPrivateKey>(decodedJWT, key)
 }
-inline fun <reified T: JWSRSAAlgorithm>verifySignature(jwt: String, key: RSAPublicKey): Either<KJWTVerificationError, JWT<T>> {
-    return verifySignature<T, RSAPublicKey, RSAPrivateKey>(jwt, key, algorithm())
+fun <T: JWSRSAAlgorithm>verifySignature(jwt: String, key: RSAPublicKey, algorithm: T): Either<KJWTVerificationError, JWT<T>> {
+    return verifySignature<T, RSAPublicKey, RSAPrivateKey>(jwt, key, algorithm)
 }
 fun <T: JWSECDSAAlgorithm>verifySignature(decodedJWT: DecodedJWT<T>, key: ECPublicKey): Either<KJWTVerificationError, JWT<T>> {
     return verifySignature<T, ECPublicKey, ECPrivateKey>(decodedJWT, key)
 }
-inline fun <reified T: JWSECDSAAlgorithm>verifySignature(jwt: String, key: ECPublicKey): Either<KJWTVerificationError, JWT<T>> {
-    return verifySignature<T, ECPublicKey, ECPrivateKey>(jwt, key, algorithm())
+fun <T: JWSECDSAAlgorithm>verifySignature(jwt: String, key: ECPublicKey, algorithm: T): Either<KJWTVerificationError, JWT<T>> {
+    return verifySignature<T, ECPublicKey, ECPrivateKey>(jwt, key, algorithm)
 }
 @JvmName("verifyRSA") // avoid JVM type signature clash
-fun <T: JWSRSAAlgorithm>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<RSAPublicKey>, validator: ClaimsValidator): ClaimsValidatorResult {
+suspend fun <T: JWSRSAAlgorithm>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<RSAPublicKey>, validator: ClaimsValidator): ClaimsValidatorResult {
     return verify<T, RSAPublicKey, RSAPrivateKey>(decodedJWT, keyProvider, validator)
 }
 @JvmName("verifyRSA") // avoid JVM type signature clash
-inline fun <reified T: JWSRSAAlgorithm>verify(jwt: String, keyProvider: PublicKeyProvider<RSAPublicKey>, noinline validator: ClaimsValidator, algorithm: T = algorithm()): ClaimsValidatorResult {
-    return verify<T, RSAPublicKey, RSAPrivateKey>(jwt, keyProvider, algorithm<T>(), validator)
+suspend fun <T: JWSRSAAlgorithm>verify(jwt: String, keyProvider: PublicKeyProvider<RSAPublicKey>, validator: ClaimsValidator, algorithm: T): ClaimsValidatorResult {
+    return verify<T, RSAPublicKey, RSAPrivateKey>(jwt, keyProvider, algorithm, validator)
 }
 @JvmName("verifyRSA") // avoid JVM type signature clash
-inline fun <reified T: JWSRSAAlgorithm>verify(jwt: String, key: RSAPublicKey, noinline validator: ClaimsValidator, algorithm: T = algorithm()): ClaimsValidatorResult {
-    return verify<T, RSAPublicKey, RSAPrivateKey>(jwt, key, algorithm(), validator)
+fun <T: JWSRSAAlgorithm>verify(jwt: String, key: RSAPublicKey, validator: ClaimsValidator, algorithm: T): ClaimsValidatorResult {
+    return verify<T, RSAPublicKey, RSAPrivateKey>(jwt, key, algorithm, validator)
 }
 @JvmName("verifyEC") // avoid JVM type signature clash
-fun <T: JWSECDSAAlgorithm>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<ECPublicKey>, validator: ClaimsValidator): ClaimsValidatorResult {
+suspend fun <T: JWSECDSAAlgorithm>verify(decodedJWT: DecodedJWT<T>, keyProvider: PublicKeyProvider<ECPublicKey>, validator: ClaimsValidator): ClaimsValidatorResult {
     return verify<T, ECPublicKey, ECPrivateKey>(decodedJWT, keyProvider, validator)
 }
 @JvmName("verifyEC") // avoid JVM type signature clash
-inline fun <reified T: JWSECDSAAlgorithm>verify(jwt: String, keyProvider: PublicKeyProvider<ECPublicKey>, noinline validator: ClaimsValidator, algorithm: T = algorithm()): ClaimsValidatorResult {
-    return verify<T, ECPublicKey, ECPrivateKey>(jwt, keyProvider, algorithm(), validator)
+suspend fun <T: JWSECDSAAlgorithm>verify(jwt: String, keyProvider: PublicKeyProvider<ECPublicKey>, validator: ClaimsValidator, algorithm: T): ClaimsValidatorResult {
+    return verify<T, ECPublicKey, ECPrivateKey>(jwt, keyProvider, algorithm, validator)
 }
 @JvmName("verifyEC") // avoid JVM type signature clash
-inline fun <reified T: JWSECDSAAlgorithm>verify(jwt: String, key: ECPublicKey, noinline validator: ClaimsValidator, algorithm: T = algorithm()): ClaimsValidatorResult {
-    return verify<T, ECPublicKey, ECPrivateKey>(jwt, key, algorithm(), validator)
+fun <T: JWSECDSAAlgorithm>verify(jwt: String, key: ECPublicKey, validator: ClaimsValidator, algorithm: T): ClaimsValidatorResult {
+    return verify<T, ECPublicKey, ECPrivateKey>(jwt, key, algorithm, validator)
 }
 
 // ------- [ HMAC ]-----

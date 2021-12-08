@@ -177,8 +177,7 @@ class JWTSpec: WordSpec() {
             }
 
             "fail for mismatched algorithm & key" {
-
-                val jwt = es256() {
+                es256() {
                     subject("1234567890")
                     claim("name", "John Doe")
                     claim("admin", true)
@@ -271,7 +270,7 @@ class JWTSpec: WordSpec() {
                     validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
                 }
                 val signedJWT = jwt.sign(privateKey).shouldBeRight()
-                verify<JWSES256Algorithm>(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation).shouldBeValid()
+                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()
 
                 // should not even compile!
                 //val (badPublicKey, _) = generateKeyPair(JWSES256Algorithm)
@@ -279,7 +278,7 @@ class JWTSpec: WordSpec() {
                 //    .shouldBe(setOf(KJWTVerificationError.InvalidSignature))
 
                 val validator = validateClaims(standardValidation, requiredOptionClaim("admin", { claimValueAsBoolean("admin") }, { !it }))
-                verify<JWSES256Algorithm>(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, validator)
+                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, validator, JWSES256Algorithm)
                     .shouldBeInvalid().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsInvalid("admin"))
             }
 
