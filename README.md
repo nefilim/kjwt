@@ -23,9 +23,10 @@ The following [Algorithms](https://datatracker.ietf.org/doc/html/rfc7518) are su
      
 # Usage
 
-Include the following dependency: `io.github.nefilim.kjwt:kjwt-core:0.3.0` in your build. 
+Include the following dependency: `io.github.nefilim.kjwt:kjwt-core:0.4.0` in your build. 
 
-For Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.3.0`. Documentation TODO. 
+* Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.4.0`. Documentation TODO. 
+* minimal JWKS support also add: `io.github.nefilim.kjwt:kjwt-jwks:0.4.0`. Documentation TODO. See [JWKSSpec](https://github.com/nefilim/kjwt/blob/main/jwks/src/test/kotlin/io/github/nefilim/kjwt/jwks/JWKSpec.kt#L57-L81)
 
 For examples see: [JWTSpec.kt](https://github.com/nefilim/kjwt/blob/main/core/src/test/kotlin/io/github/nefilim/kjwt/JWTSpec.kt) 
 
