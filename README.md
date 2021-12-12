@@ -1,3 +1,6 @@
+![Kotlin version](https://img.shields.io/badge/kotlin-1.6.0-blueviolet?logo=kotlin&logoColor=white)
+[![MavenCentral](https://img.shields.io/maven-central/v/io.github.nefilim.kjwt/kjwt-core?label=MavenCentral)](https://repo1.maven.org/maven2/io/github/nefilim/kjwt/kjwt-core/)
+
 # kJWT 
 
 Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs.
