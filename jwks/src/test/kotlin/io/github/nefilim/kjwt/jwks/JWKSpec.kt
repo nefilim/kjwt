@@ -58,7 +58,7 @@ class JWKSSpec: WordSpec() {
             "download and parse JWKS" {
                 with (WellKnownJWKSProvider.WellKnownContext("https://www.googleapis.com/oauth2/v3/certs").getJWKProvider<RSAPublicKey>(::downloadJWKS)) {
                     this().shouldBeRight()
-                    this.getKey(JWTKeyID("9341abc4092b6fc038e403c91022dd3e44539b56")).shouldBeRight().shouldBeInstanceOf<RSAPublicKey>()
+                    this.getKey(JWTKeyID("c1892eb49d7ef9adf8b2e14c05ca0d032714a237")).shouldBeRight().shouldBeInstanceOf<RSAPublicKey>()
                 }
             }
         }

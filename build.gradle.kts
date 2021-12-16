@@ -8,7 +8,7 @@ plugins {
     id(PluginIds.TestLogger) version PluginVersions.TestLogger
     id(PluginIds.DependencyUpdates) version PluginVersions.DependencyUpdates
     id(PluginIds.Idea)
-    id(PluginIds.Reckon) version PluginVersions.Reckon
+    id(PluginIds.SemVer) version PluginVersions.SemVer
     id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
 }
 
@@ -21,15 +21,6 @@ buildscript {
 repositories {
     mavenLocal()
     mavenCentral()
-}
-
-reckon {
-    scopeFromProp()
-    stageFromProp("milestone", "final")
-}
-
-tasks.reckonTagCreate {
-    dependsOn("check")
 }
 
 nexusPublishing {
