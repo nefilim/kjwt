@@ -11,6 +11,8 @@ plugins {
     id(PluginIds.SemVer) version PluginVersions.SemVer
     id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
     id(PluginIds.GitHubRelease) version PluginVersions.GitHubRelease
+    `maven-publish`
+    signing 
 }
 
 buildscript {
@@ -82,6 +84,21 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+    }
+}
+
+val publications: PublicationContainer = (extensions.getByName("publishing") as PublishingExtension).publications
+
+signing {
+    val skipSigning = findProperty("skipSigning")?.let { (it as String).toBoolean() } ?: false
+    if (!skipSigning) {
+        val signingKeyId: String? by project
+        val signingKey: String? by project
+        val signingPassword: String? by project
+        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        sign(publications)
+    } else {
+        logger.warn("skipping signing")
     }
 }
 

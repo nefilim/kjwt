@@ -2,7 +2,6 @@ plugins {
     kotlin(PluginIds.KotlinKapt)
     kotlin(PluginIds.KotlinXSerialization) version PluginVersions.Kotlin
     `maven-publish`
-    signing
 }
 
 dependencies {
@@ -24,20 +23,6 @@ dependencies {
         Libraries.NimbusJWT,
     ).map {
         testImplementation(it)
-    }
-}
-
-signing {
-    useInMemoryPgpKeys(
-        System.getenv("SIGNING_KEY_ID"),
-        System.getenv("SIGNING_KEY"),
-        System.getenv("SIGNING_KEY_PASSPHRASE"),
-    )
-    val skipSigning = findProperty("skipSigning")?.let { (it as String).toBoolean() } ?: false
-    if (!skipSigning)
-        sign(publishing.publications)
-    else {
-        logger.warn("skipping signing")
     }
 }
 
