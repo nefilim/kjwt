@@ -10,6 +10,7 @@ plugins {
     id(PluginIds.Idea)
     id(PluginIds.SemVer) version PluginVersions.SemVer
     id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
+    id(PluginIds.GitHubRelease) version PluginVersions.GitHubRelease
 }
 
 buildscript {

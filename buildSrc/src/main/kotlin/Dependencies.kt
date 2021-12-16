@@ -21,7 +21,7 @@ object PluginVersions { // please keep this sorted in sections
 
     // 3rd Party
     const val DependencyUpdates = "0.39.0"
-    const val GitHub = "2.2.12"
+    const val GitHubRelease = "2.2.12"
     const val GradleNexusPublish = "1.1.0"
     const val Protobuf = "0.8.18"
     const val SemVer = "0.0.6"
