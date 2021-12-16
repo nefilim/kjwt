@@ -41,8 +41,8 @@ jobs:
       - name: Show Git Repo debug
         run: | 
           git status
+          git branch -a --format="%(*refname)"
           git --no-pager log
-          git --no-pager log refs/heads/main
           git show-branch --current -g
 
       - name: Restore Gradle cache
