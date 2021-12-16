@@ -53,7 +53,7 @@ jobs:
         run: |
           ./gradlew --no-daemon clean build -Psemver.main.scope=patch -PgitHubTokenProp=${{ github.token }} publishToSonatype closeAndReleaseSonatypeStagingRepository githubRelease
 
-      - name: Build and Release Branch
+      - name: Build and Release Develop
         if: ${{ github.ref_name == 'develop' }}
         run: |
           ./gradlew --no-daemon clean build -Psemver.develop.stage=beta -PgitHubTokenProp=${{ github.token }} 
