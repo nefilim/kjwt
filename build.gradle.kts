@@ -26,6 +26,8 @@ repositories {
 nexusPublishing {
     repositories {
         sonatype {
+            username.set(System.getenv("OSS_USER"))
+            password.set(System.getenv("OSS_TOKEN"))
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
         }

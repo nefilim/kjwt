@@ -6,6 +6,7 @@ object PluginIds { // please keep this sorted in sections
 
     // 3rd Party
     const val DependencyUpdates = "com.github.ben-manes.versions"
+    const val GitHubRelease = "com.github.breadmoirai.github-release"
     const val GradleNexusPublish = "io.github.gradle-nexus.publish-plugin"
     const val Idea = "idea"
     const val Protobuf = "com.google.protobuf"
@@ -19,11 +20,11 @@ object PluginVersions { // please keep this sorted in sections
     const val Kotlin = "1.6.0"
 
     // 3rd Party
-    const val AxionRelease = "1.13.6"
     const val DependencyUpdates = "0.39.0"
+    const val GitHub = "2.2.12"
     const val GradleNexusPublish = "1.1.0"
     const val Protobuf = "0.8.18"
-    const val SemVer = "0.0.4"
+    const val SemVer = "0.0.6"
     const val TaskTree = "2.1.0"
     const val TestLogger = "3.1.0"
 }

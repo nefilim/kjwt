@@ -67,14 +67,14 @@ class JWKSSpec: WordSpec() {
                 val keyID = JWTKeyID(UUID.randomUUID().toString())
                 with (randomJWKS<RSAPublicKey>(keyID).cached(0.milliseconds, GlobalScope)) {
                     var previousKey: RSAPublicKey? = null
-                    repeat(10) {
+                    repeat(3) {
                         this().shouldBeRight()
                         this.getKey(keyID).shouldBeRight().shouldBeInstanceOf<RSAPublicKey>().also {
                             println("got key: $it")
                             it shouldNotBe (previousKey)
                             previousKey = it
                         }
-                        delay(350.milliseconds)
+                        delay(750.milliseconds)
                     }
                 }
             }
