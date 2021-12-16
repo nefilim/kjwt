@@ -17,15 +17,6 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
-    env:
-      TOKEN_GITHUB_ACTION: '${{ secrets.GITHUB_TOKEN }}'
-      OSS_USER: '${{ secrets.OSS_USER }}'
-      OSS_TOKEN: '${{ secrets.OSS_TOKEN }}'
-      OSS_STAGING_PROFILE_ID: '${{ secrets.OSS_STAGING_PROFILE_ID }}'
-      SIGNING_KEY_ID: '${{ secrets.SIGNING_KEY_ID }}'
-      SIGNING_KEY_PASSPHRASE: '${{ secrets.SIGNING_KEY_PASSPHRASE }}'
-      SIGNING_KEY: '${{ secrets.SIGNING_KEY }}'
-
     steps:
       - name: Set up JDK 11
         uses: actions/setup-java@v2
@@ -52,16 +43,40 @@ jobs:
         if: ${{ github.ref_name == 'main' }}
         run: |
           ./gradlew --no-daemon clean build -Psemver.main.scope=patch -PgitHubTokenProp=${{ github.token }} publishToSonatype closeAndReleaseSonatypeStagingRepository githubRelease
+        env:
+          TOKEN_GITHUB_ACTION: '${{ secrets.GITHUB_TOKEN }}'
+          OSS_USER: '${{ secrets.OSS_USER }}'
+          OSS_TOKEN: '${{ secrets.OSS_TOKEN }}'
+          OSS_STAGING_PROFILE_ID: '${{ secrets.OSS_STAGING_PROFILE_ID }}'
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
 
       - name: Build and Release Develop
         if: ${{ github.ref_name == 'develop' }}
         run: |
           ./gradlew --no-daemon clean build -Psemver.develop.stage=beta -PgitHubTokenProp=${{ github.token }} 
+        env:
+          TOKEN_GITHUB_ACTION: '${{ secrets.GITHUB_TOKEN }}'
+          OSS_USER: '${{ secrets.OSS_USER }}'
+          OSS_TOKEN: '${{ secrets.OSS_TOKEN }}'
+          OSS_STAGING_PROFILE_ID: '${{ secrets.OSS_STAGING_PROFILE_ID }}'
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
 
       - name: Build and Release Branch
         if: ${{ github.ref_name != 'develop' && github.ref_name != 'main' }}
         run: |
           ./gradlew --no-daemon clean build -Psemver.develop.stage=alpha -PgitHubTokenProp=${{ github.token }} 
+        env:
+          TOKEN_GITHUB_ACTION: '${{ secrets.GITHUB_TOKEN }}'
+          OSS_USER: '${{ secrets.OSS_USER }}'
+          OSS_TOKEN: '${{ secrets.OSS_TOKEN }}'
+          OSS_STAGING_PROFILE_ID: '${{ secrets.OSS_STAGING_PROFILE_ID }}'
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
 
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
