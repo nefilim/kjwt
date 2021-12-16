@@ -25,36 +25,3 @@ dependencies {
         testImplementation(it)
     }
 }
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            pom {
-                name.set("kjwt-core")
-                description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
-                url.set("https://github.com/nefilim/kjwt")
-                licenses {
-                    license {
-                        name.set("GPL-3.0-only")
-                        url.set("https://opensource.org/licenses/GPL-3.0")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("nefilim")
-                        name.set("nefilim")
-                        email.set("nefilim@hotmail.com")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:https://github.com/nefilim/kjwt.git")
-                    url.set("https://github.com/nefilim/kjwt")
-                }
-            }
-            artifactId = "kjwt-core"
-            groupId = project.group.toString()
-            version = project.version.toString()
-            from(components["java"])
-        }
-    }
-}
