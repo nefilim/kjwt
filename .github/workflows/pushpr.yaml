@@ -37,6 +37,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Show Git Repo debug
         run: | 
           git status
           git --no-pager log
