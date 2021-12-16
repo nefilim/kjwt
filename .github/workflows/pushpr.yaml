@@ -28,6 +28,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+        run: | 
+          git status
+          git --no-pager log
+          git --no-pager log refs/heads/main
+          git show-branch --current -g
 
       - name: Restore Gradle cache
         uses: actions/cache@v2
