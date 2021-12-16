@@ -24,7 +24,7 @@ object PluginVersions { // please keep this sorted in sections
     const val GitHub = "2.2.12"
     const val GradleNexusPublish = "1.1.0"
     const val Protobuf = "0.8.18"
-    const val SemVer = "0.0.5"
+    const val SemVer = "0.0.6"
     const val TaskTree = "2.1.0"
     const val TestLogger = "3.1.0"
 }
