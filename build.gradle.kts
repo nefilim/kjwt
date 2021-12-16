@@ -135,7 +135,24 @@ subprojects {
     }
 }
 
+githubRelease {
+    val gitHubTokenProp: String? by project
 
+    token(gitHubTokenProp) // This is your personal access token with Repo permissions
+    // You get this from your user settings > developer settings > Personal Access Tokens
+    owner("nefilim") // default is the last part of your group. Eg group: "com.github.breadmoirai" => owner: "breadmoirai"
+    repo("kjwt") // by default this is set to your project name
+    tagName("v${project.version}") // by default this is set to "v${project.version}"
+    targetCommitish("main") // by default this is set to "master"
+    body(changelog()) // by default this is empty
+    draft(false) // by default this is false
+    prerelease(false) // by default this is false
+
+    overwrite(false) // by default false; if set to true, will delete an existing release with the same tag and name
+    dryRun(false) // by default false; you can use this to see what actions would be taken without making a release
+    apiEndpoint("https://api.github.com") // should only change for github enterprise users
+    client // This is the okhttp client used for http requests
+}
 
 fun isNonStable(version: String): Boolean {
     val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
