@@ -1,5 +1,8 @@
 package io.github.nefilim.kjwt.jwks
 
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import io.github.nefilim.kjwt.JWSAlgorithm
@@ -13,6 +16,7 @@ import io.github.nefilim.kjwt.jwks.WellKnownJWKSProvider.downloadJWKS
 import io.github.nefilim.kjwt.jwks.WellKnownJWKSProvider.getJWKProvider
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -22,6 +26,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import mu.KotlinLogging
+import java.net.URL
+import java.net.URLConnection
 import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
@@ -31,6 +42,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTime::class)
 class JWKSSpec: WordSpec() {
+    private val logger = KotlinLogging.logger { }
+
     init {
         "JWK" should {
             "deserialize and build keys correctly when valid" {
@@ -56,10 +69,19 @@ class JWKSSpec: WordSpec() {
         }
         "WellKnownJWKS" should {
             "download and parse JWKS" {
-                with (WellKnownJWKSProvider.WellKnownContext("https://www.googleapis.com/oauth2/v3/certs").getJWKProvider<RSAPublicKey>(::downloadJWKS)) {
-                    this().shouldBeRight()
-                    this.getKey(JWTKeyID("c1892eb49d7ef9adf8b2e14c05ca0d032714a237")).shouldBeRight().shouldBeInstanceOf<RSAPublicKey>()
-                }
+                val wellKnownContext = WellKnownJWKSProvider.WellKnownContext("https://www.googleapis.com/oauth2/v3/certs")
+                downloadJWKS(wellKnownContext).flatMap {
+                    Either.fromNullable(Json.parseToJsonElement(it).jsonObject["keys"]?.jsonArray?.first()?.jsonObject?.get("kid")).mapLeft { JWKError.NoSuchKey(JWTKeyID("missing kid?")) }
+                }.fold({
+                    fail("failed to download JWKS json from Google: $it")
+                }, {
+                    val kid = JWTKeyID(it.jsonPrimitive.content)
+                    logger.info { "downloading JWK for $kid from Google" }
+                    with(wellKnownContext.getJWKProvider<RSAPublicKey>(::downloadJWKS)) {
+                        this().shouldBeRight()
+                        this.getKey(kid).shouldBeRight().shouldBeInstanceOf<RSAPublicKey>()
+                    }
+                })
             }
         }
         "CachedJWKS" should {

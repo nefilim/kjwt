@@ -6,29 +6,29 @@ import com.google.protobuf.gradle.protoc
 
 plugins {
     `java-library`
-    id(PluginIds.Protobuf) version PluginVersions.Protobuf
+    alias(libs.plugins.protobuf)
     `maven-publish`
 }
 
 dependencies {
-    protobuf(Libraries.GoogleKMSProtobuf)
+    protobuf(libs.google.kms.protobuf)
     listOf(
         project(":core"),
-        platform(Libraries.ArrowStack),
-        Libraries.ArrowCore,
-        Libraries.GRPC.Protobuf,
-        Libraries.GRPC.Stub,
-        Libraries.GRPC.StubKotlin,
-        Libraries.Protobuf.Kotlin,
-        Libraries.Protobuf.JavaUtil,
+        platform(libs.arrow.stack),
+        libs.arrow.core,
+        libs.grpc.protobuf,
+        libs.grpc.stub,
+        libs.grpc.stubKotlin,
+        libs.protobuf.javautil,
+        libs.protobuf.kotlin,
     ).map {
         api(it)
     }
 
     listOf(
-        Libraries.Kotest,
-        Libraries.KotestAssertions,
-        Libraries.KotestAssertionsArrow,
+        libs.kotest.runner,
+        libs.kotest.assertions.core,
+        libs.kotest.assertions.arrow,
     ).map {
         testImplementation(it)
     }
@@ -36,14 +36,14 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = Libraries.Protobuf.Protoc
+        artifact = libs.protobuf.protoc.get().toString()
     }
     plugins {
         id("grpc") {
-            artifact = Libraries.GRPC.ProtocJava
+            artifact = libs.grpc.protoc.java.get().toString()
         }
         id("grpckt") {
-            artifact = Libraries.GRPC.ProtocKotlin
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.2.0:jdk7@jar" // libs.grpc.protoc.kotlin.get().toString()
         }
     }
     generateProtoTasks {

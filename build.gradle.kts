@@ -2,17 +2,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
-    kotlin("jvm") version PluginVersions.Kotlin
-    kotlin(PluginIds.KotlinKapt) version PluginVersions.Kotlin
-    id(PluginIds.TaskTree) version PluginVersions.TaskTree
-    id(PluginIds.TestLogger) version PluginVersions.TestLogger
-    id(PluginIds.DependencyUpdates) version PluginVersions.DependencyUpdates
-    id(PluginIds.Idea)
-    id(PluginIds.SemVer) version PluginVersions.SemVer
-    id(PluginIds.GradleNexusPublish) version PluginVersions.GradleNexusPublish
-    id(PluginIds.GitHubRelease) version PluginVersions.GitHubRelease
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.tasktree)
+    alias(libs.plugins.testlogger)
+    alias(libs.plugins.semver)
+    alias(libs.plugins.nexus.plublish)
+    alias(libs.plugins.dependencyUpdates)
+    alias(libs.plugins.dependencyCheck)
+    alias(libs.plugins.githubRelease)
     `maven-publish`
-    signing 
+    signing
 }
 
 buildscript {
@@ -38,8 +37,6 @@ nexusPublishing {
 }
 
 allprojects {
-    apply(plugin = PluginIds.DependencyUpdates)
-
     group = "io.github.nefilim.kjwt"
 
     tasks.withType<JavaCompile> {
@@ -60,9 +57,8 @@ allprojects {
 subprojects {
     // https://kotlinlang.org/docs/reference/using-gradle.html#using-gradle-kotlin-dsl
     apply {
-        plugin(PluginIds.Kotlin)
-        plugin(PluginIds.Idea)
-        plugin(PluginIds.TestLogger)
+        plugin(rootProject.libs.plugins.kotlin.jvm.get().pluginId)
+        plugin(rootProject.libs.plugins.testlogger.get().pluginId)
         plugin("signing")
         plugin("maven-publish")
     }
@@ -82,6 +78,7 @@ subprojects {
         showCauses = true
         slowThreshold = 1000
         showSummary = true
+        showStandardStreams = true
     }
 
     tasks.withType<Test> {

@@ -1,0 +1,6 @@
+extraction:
+  java:
+    before_index:
+      - export ORG_GRADLE_PROJECT_semverOverrideVersion=1.0.0 # bogus version because lgtm doesn't check out all branch with all history
+    index:
+      java_version: 11
