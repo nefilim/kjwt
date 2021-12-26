@@ -1,0 +1,74 @@
+[versions]
+kotlin = "1.6.+"
+kotlinXCoroutines = "1.6.+"
+kotlinXSerialization = "1.3.+"
+
+# third party
+arrow = "1.0.+"
+github-release = "2.2.+"
+google-kms = "0.94.+"
+gradle-versions = "0.39.+"
+grpc = "1.43.+"
+grpc-kotlin = "1.2.+"
+gversions = "0.39.+"
+jib = "3.1.+"
+jib-extension = "0.1.+"
+kotest = "5.0.+"
+kotestExtensionsArrow = "1.2.+"
+kover = "0.4.+"
+kotlinLogging = "2.1.+"
+logback = "1.2.+"
+nexus-publish = "1.1.+"
+nimbus = "9.15.+"
+owasp-dependencycheck = "6.5.+"
+protobuf = "3.19.+"
+protobuf-plugin = "0.8.+"
+semver = "0.0.+"
+slf4j = "1.7.+"
+tasktree = "2.1.+"
+testlogger = "3.1.+"
+
+[libraries]
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinXCoroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinXSerialization" }
+
+arrow-stack = { module = "io.arrow-kt:arrow-stack", version.ref = "arrow" }
+arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
+arrow-fx = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }
+arrow-meta = { module = "io.arrow-kt:arrow-meta", version.ref = "arrow" }
+arrow-optics = { module = "io.arrow-kt:arrow-optics", version.ref = "arrow" }
+arrow-opticsKSP = { module = "io.arrow-kt:arrow-optics-ksp-plugin", version.ref = "arrow" }
+
+google-kms-protobuf = { module = "com.google.api.grpc:proto-google-cloud-kms-v1", version.ref = "google-kms" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+grpc-protoc-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
+grpc-stubKotlin = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpc-kotlin" }
+grpc-protoc-kotlin = { module = "io.grpc:protoc-gen-grpc-kotlin", version.ref = "grpc-kotlin" }
+
+kotest-runner = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
+kotest-assertions-arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotestExtensionsArrow" }
+
+nimbus = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus" }
+
+protobuf-javautil = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protobuf" }
+protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
+protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
+
+kotlinLogging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "kotlinLogging" }
+logbackClassic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+slf4jAPI = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+
+[plugins]
+dependencyCheck = { id = "org.owasp.dependencycheck", version.ref = "owasp-dependencycheck" }
+dependencyUpdates = { id = "com.github.ben-manes.versions", version.ref = "gradle-versions" }
+githubRelease = { id = "com.github.breadmoirai.github-release", version.ref = "github-release" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+nexus-plublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
+semver = { id = "io.github.nefilim.gradle.semver-plugin", version.ref = "semver" }
+tasktree = { id = "com.dorongold.task-tree", version.ref = "tasktree" }
+testlogger = { id = "com.adarshr.test-logger", version.ref = "testlogger" }

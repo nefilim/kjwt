@@ -1,25 +1,27 @@
 plugins {
     `java-library`
-    kotlin(PluginIds.KotlinXSerialization) version PluginVersions.Kotlin
+    alias(libs.plugins.kotlinx.serialization)
     `maven-publish`
 }
 
 dependencies {
     listOf(
         project(":core"),
-        platform(Libraries.ArrowStack),
-        Libraries.ArrowCore,
-        Libraries.KotlinReflect,
-        Libraries.KotlinXCoRoutinesCore,
-        Libraries.KotlinXSerializationJSON,
+        platform(libs.arrow.stack),
+        libs.arrow.core,
+        libs.kotlin.reflect,
+        libs.kotlinx.coroutines.core,
+        libs.kotlinx.serialization.json,
     ).map {
         api(it)
     }
 
     listOf(
-        Libraries.Kotest,
-        Libraries.KotestAssertions,
-        Libraries.KotestAssertionsArrow,
+        libs.kotest.runner,
+        libs.kotest.assertions.core,
+        libs.kotest.assertions.arrow,
+        libs.kotlinLogging,
+        libs.logbackClassic,
     ).map {
         testImplementation(it)
     }
