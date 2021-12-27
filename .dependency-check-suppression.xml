@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes><![CDATA[
+      let's not score any own goals
+      ]]></notes>
+<!--        <packageUrl regex="true">^pkg:maven/io\.github\.nefilim\.kjwt/.*$</packageUrl>-->
+<!--        <filePath regex="true">.*\bcore\.jar</filePath>-->
+        <gav regex="true">io\.github\.nefilim\.kjwt:.*$</gav>
+        <cpe>cpe:/a:github:github</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+	    FP per #3920
+	    ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.grpc/protoc-gen-grpc-kotlin.*$</packageUrl>
+        <cpe>cpe:/a:grpc:grpc</cpe>
+    </suppress>
+</suppressions>

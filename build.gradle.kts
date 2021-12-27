@@ -37,6 +37,8 @@ nexusPublishing {
 }
 
 allprojects {
+    apply(plugin = rootProject.libs.plugins.dependencyCheck.get().pluginId)
+
     group = "io.github.nefilim.kjwt"
 
     tasks.withType<JavaCompile> {
@@ -51,6 +53,20 @@ allprojects {
             languageVersion = "1.6"
             apiVersion = "1.6"
         }
+    }
+
+    dependencyCheck {
+        failOnError = true
+
+        suppressionFile = ".dependency-check-suppression.xml"
+        analyzers.experimentalEnabled = false
+        analyzers.assemblyEnabled = false
+        analyzers.msbuildEnabled = false
+        analyzers.nuspecEnabled = false
+        analyzers.nugetconfEnabled = false
+        analyzers.pyPackageEnabled = false
+        analyzers.pyDistributionEnabled = false
+        analyzers.rubygemsEnabled = false
     }
 }
 
