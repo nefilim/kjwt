@@ -1,4 +1,4 @@
-name: push and pr release
+name: CI Build
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Build Develop
+      - name: Build Feature
         if: ${{ github.ref_name != 'develop' && github.ref_name != 'main' }}
         uses: gradle/gradle-build-action@v2
         with:
