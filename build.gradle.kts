@@ -1,12 +1,10 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.tasktree)
-    alias(libs.plugins.testlogger)
     alias(libs.plugins.semver)
-    alias(libs.plugins.nexus.plublish)
+    alias(libs.plugins.nexus.publish)
     alias(libs.plugins.dependencyUpdates)
     alias(libs.plugins.dependencyCheck)
     alias(libs.plugins.githubRelease)
@@ -14,17 +12,26 @@ plugins {
     signing
 }
 
-buildscript {
-    repositories {
-        gradlePluginPortal()
-    }
-}
-
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
+dependencyCheck {
+    failOnError = true
+
+    suppressionFile = ".dependency-check-suppression.xml"
+    analyzers.experimentalEnabled = false
+    analyzers.assemblyEnabled = false
+    analyzers.msbuildEnabled = false
+    analyzers.nuspecEnabled = false
+    analyzers.nugetconfEnabled = false
+    analyzers.pyPackageEnabled = false
+    analyzers.pyDistributionEnabled = false
+    analyzers.rubygemsEnabled = false
+}
+
+// can only be applied to root project 
 nexusPublishing {
     repositories {
         sonatype {
@@ -36,128 +43,15 @@ nexusPublishing {
     }
 }
 
-allprojects {
-    apply(plugin = rootProject.libs.plugins.dependencyCheck.get().pluginId)
-
-    group = "io.github.nefilim.kjwt"
-
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = JavaVersion.VERSION_11.toString()
-        targetCompatibility = sourceCompatibility
-    }
-
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict", "-Xopt-in=kotlin.RequiresOptIn")
-            jvmTarget = "11"
-            languageVersion = "1.6"
-            apiVersion = "1.6"
-        }
-    }
-
-    dependencyCheck {
-        failOnError = true
-
-        suppressionFile = ".dependency-check-suppression.xml"
-        analyzers.experimentalEnabled = false
-        analyzers.assemblyEnabled = false
-        analyzers.msbuildEnabled = false
-        analyzers.nuspecEnabled = false
-        analyzers.nugetconfEnabled = false
-        analyzers.pyPackageEnabled = false
-        analyzers.pyDistributionEnabled = false
-        analyzers.rubygemsEnabled = false
-    }
-}
-
-subprojects {
-    // https://kotlinlang.org/docs/reference/using-gradle.html#using-gradle-kotlin-dsl
-    apply {
-        plugin(rootProject.libs.plugins.kotlin.jvm.get().pluginId)
-        plugin(rootProject.libs.plugins.testlogger.get().pluginId)
-        plugin("signing")
-        plugin("maven-publish")
-    }
-
-    java {
-        withSourcesJar()
-        withJavadocJar()
-    }
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-
-    configure<com.adarshr.gradle.testlogger.TestLoggerExtension> {
-        theme = com.adarshr.gradle.testlogger.theme.ThemeType.STANDARD
-        showCauses = true
-        slowThreshold = 1000
-        showSummary = true
-        showStandardStreams = true
-    }
-
-    tasks.withType<Test> {
-        useJUnitPlatform()
-    }
-
-    signing {
-        val skipSigning = findProperty("skipSigning")?.let { (it as String).toBoolean() } ?: false
-        if (!skipSigning) {
-            val signingKeyId: String? by project
-            val signingKey: String? by project
-            val signingPassword: String? by project
-            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-            sign(publishing.publications)
-        } else {
-            logger.warn("skipping signing")
-        }
-    }
-
-    publishing {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                pom {
-                    name.set("kjwt-${project.name}")
-                    description.set("Functional Kotlin & Arrow based library for generating and verifying JWTs and JWSs")
-                    url.set("https://github.com/nefilim/kjwt")
-                    licenses {
-                        license {
-                            name.set("GPL-3.0-only")
-                            url.set("https://opensource.org/licenses/GPL-3.0")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("nefilim")
-                            name.set("nefilim")
-                            email.set("nefilim@hotmail.com")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:https://github.com/nefilim/kjwt.git")
-                        url.set("https://github.com/nefilim/kjwt")
-                    }
-                }
-                artifactId = "kjwt-${project.name}"
-                groupId = project.group.toString()
-                version = project.version.toString()
-                from(components["java"])
-            }
-        }
-    }
-}
-
+val githubTokenValue = findProperty("githubToken")?.toString() ?: System.getenv("GITHUB_TOKEN")
 githubRelease {
-    val gitHubTokenProp: String? by project
-
-    token(gitHubTokenProp) // This is your personal access token with Repo permissions
+    token(githubTokenValue) // This is your personal access token with Repo permissions
     // You get this from your user settings > developer settings > Personal Access Tokens
     owner("nefilim") // default is the last part of your group. Eg group: "com.github.breadmoirai" => owner: "breadmoirai"
     repo("kjwt") // by default this is set to your project name
     tagName("v${project.version}") // by default this is set to "v${project.version}"
     targetCommitish("main") // by default this is set to "master"
-    body(changelog()) // by default this is empty
+    body(changelog())
     draft(false) // by default this is false
     prerelease(false) // by default this is false
 

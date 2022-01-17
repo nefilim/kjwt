@@ -1,12 +1,14 @@
 plugins {
     `java-library`
     alias(libs.plugins.kotlinx.serialization)
-    `maven-publish`
+    id("kotlin-conventions")
+    id("build-conventions")
+    id("publishing-conventions")
 }
 
 dependencies {
     listOf(
-        project(":core"),
+        projects.core,
         platform(libs.arrow.stack),
         libs.arrow.core,
         libs.kotlin.reflect,

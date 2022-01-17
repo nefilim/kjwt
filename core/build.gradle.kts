@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlinx.serialization)
-    `maven-publish`
+    id("kotlin-conventions")
+    id("build-conventions")
+    id("publishing-conventions")
 }
 
 dependencies {
