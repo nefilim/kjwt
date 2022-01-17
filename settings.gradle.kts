@@ -8,6 +8,7 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
     }
+    includeBuild("build-logic")
 }
 
 include(

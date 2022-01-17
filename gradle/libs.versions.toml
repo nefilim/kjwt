@@ -5,8 +5,13 @@ kotlinXSerialization = "1.3.2"
 
 # third party
 arrow = "1.0.1"
-github-release = "2.2.12"
 google-kms = "0.94.0"
+gradle-github-release = "2.2.12"
+gradle-nexus-publish = "1.1.0"
+gradle-protobuf-plugin = "0.8.18"
+gradle-semver = "0.0.24"
+gradle-tasktree = "2.1.0"
+gradle-testlogger = "3.1.0"
 gradle-versions = "0.39.0"
 grpc = "1.43.1"
 grpc-kotlin = "1.2.0"
@@ -17,15 +22,10 @@ kotestExtensionsArrow = "1.2.1"
 kover = "0.4.4"
 kotlinLogging = "2.1.21"
 logback = "1.2.10"
-nexus-publish = "1.1.0"
 nimbus = "9.15.2"
 owasp-dependencycheck = "6.5.1"
 protobuf = "3.19.1"
-protobuf-plugin = "0.8.18"
-semver = "0.0.+"
 slf4j = "1.7.4"
-tasktree = "2.1.0"
-testlogger = "3.1.0"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -40,6 +40,10 @@ arrow-optics = { module = "io.arrow-kt:arrow-optics", version.ref = "arrow" }
 arrow-opticsKSP = { module = "io.arrow-kt:arrow-optics-ksp-plugin", version.ref = "arrow" }
 
 google-kms-protobuf = { module = "com.google.api.grpc:proto-google-cloud-kms-v1", version.ref = "google-kms" }
+gradle-nexusPublish = { module = "io.github.gradle-nexus:publish-plugin", version.ref = "gradle-nexus-publish" }
+gradle-kotlin-jvm = { module = "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+gradle-testlogger = { module = "com.adarshr:gradle-test-logger-plugin", version.ref = "gradle-testlogger" }
+gradle-semver = { module = "io.github.nefilim.gradle:semver-plugin", version.ref = "gradle-semver" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpc-protoc-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
@@ -63,11 +67,11 @@ slf4jAPI = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 [plugins]
 dependencyCheck = { id = "org.owasp.dependencycheck", version.ref = "owasp-dependencycheck" }
 dependencyUpdates = { id = "com.github.ben-manes.versions", version.ref = "gradle-versions" }
-githubRelease = { id = "com.github.breadmoirai.github-release", version.ref = "github-release" }
+githubRelease = { id = "com.github.breadmoirai.github-release", version.ref = "gradle-github-release" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-nexus-plublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish" }
-protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
-semver = { id = "io.github.nefilim.gradle.semver-plugin", version.ref = "semver" }
-tasktree = { id = "com.dorongold.task-tree", version.ref = "tasktree" }
-testlogger = { id = "com.adarshr.test-logger", version.ref = "testlogger" }
+nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "gradle-nexus-publish" }
+protobuf = { id = "com.google.protobuf", version.ref = "gradle-protobuf-plugin" }
+semver = { id = "io.github.nefilim.gradle.semver-plugin", version.ref = "gradle-semver" }
+tasktree = { id = "com.dorongold.task-tree", version.ref = "gradle-tasktree" }
+testlogger = { id = "com.adarshr.test-logger", version.ref = "gradle-testlogger" }

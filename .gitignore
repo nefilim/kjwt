@@ -1,6 +1,6 @@
 /.gradle
 /build
-/buildSrc/.gradle
+/build-logic/.gradle
 .DS_Store
 build/
 *.iws

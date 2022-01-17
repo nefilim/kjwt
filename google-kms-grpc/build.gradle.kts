@@ -7,13 +7,15 @@ import com.google.protobuf.gradle.protoc
 plugins {
     `java-library`
     alias(libs.plugins.protobuf)
-    `maven-publish`
+    id("kotlin-conventions")
+    id("build-conventions")
+    id("publishing-conventions")
 }
 
 dependencies {
     protobuf(libs.google.kms.protobuf)
     listOf(
-        project(":core"),
+        projects.core,
         platform(libs.arrow.stack),
         libs.arrow.core,
         libs.grpc.protobuf,

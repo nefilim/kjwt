@@ -17,7 +17,7 @@ The following [Algorithms](https://datatracker.ietf.org/doc/html/rfc7518) are su
 * RS384
 * RS512
 * ES256  (secp256r1 curve)
-* ES256K (secp256k1 curve)
+* ES256K (secp256k1 curve - NOTE: this curve has been [deprecated](https://bugs.openjdk.java.net/browse/JDK-8235184) and support will be removed to main compatability with JDK17)
 * ES384
 * ES512
      
@@ -25,8 +25,10 @@ The following [Algorithms](https://datatracker.ietf.org/doc/html/rfc7518) are su
 
 Include the following dependency: `io.github.nefilim.kjwt:kjwt-core:0.4.0` in your build. 
 
-* Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.4.0`. Documentation TODO. 
-* minimal JWKS support also add: `io.github.nefilim.kjwt:kjwt-jwks:0.4.0`. Documentation TODO. See [JWKSSpec](https://github.com/nefilim/kjwt/blob/main/jwks/src/test/kotlin/io/github/nefilim/kjwt/jwks/JWKSpec.kt#L57-L81)
+* Google KMS support also add: `io.github.nefilim.kjwt:kjwt-google-kms-grpc:0.4.8`. Documentation TODO. 
+* minimal JWKS support also add: `io.github.nefilim.kjwt:kjwt-jwks:0.4.8`. Documentation TODO. See [JWKSSpec](https://github.com/nefilim/kjwt/blob/main/jwks/src/test/kotlin/io/github/nefilim/kjwt/jwks/JWKSpec.kt#L57-L81)
+
+Please make sure you have [Arrow Core](https://arrow-kt.io/docs/core/#Gradle-kotlin) in your dependencies. 
 
 For examples see: [JWTSpec.kt](https://github.com/nefilim/kjwt/blob/main/core/src/test/kotlin/io/github/nefilim/kjwt/JWTSpec.kt) 
 
