@@ -56,14 +56,14 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: build/test-results/**/*.xml
+          files: '**/build/test-results/**/*.xml'
 
       - name: Publish Test Report
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: test-report
-          path: build/reports/tests/test/*
+          path: '**/build/reports/tests/test/*'
 
       - name: Stop Gradle daemons
         run: ./gradlew --stop
