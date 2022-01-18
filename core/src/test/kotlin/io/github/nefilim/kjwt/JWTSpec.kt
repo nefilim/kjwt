@@ -103,6 +103,26 @@ class JWTSpec: WordSpec() {
                 JWT.decodeT(signedJWT.rendered, JWSRSA256Algorithm).shouldBeLeft(KJWTVerificationError.AlgorithmMismatch)
             }
 
+            "support arbitrary JSON claim values" {
+                val thelist = listOf("tagA", "tagB", "tagC")
+                val rawJWT = es256 {
+                    subject("1234567890")
+                    claim("name", "John Doe")
+                    claim("admin", true)
+                    claim("thenumber", 42)
+                    claim("thelist", thelist)
+                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                }
+
+                JWT.decode(rawJWT.encode()).shouldBeRight().also {
+                    it.parts.size shouldBe 2
+                    it.jwt shouldBe rawJWT
+                    it.claimValueAsList("thelist") shouldBe thelist
+                    it.claimValueAsBoolean("admin").shouldBeSome() shouldBe true
+                    it.claimValueAsInt("thenumber").shouldBeSome() shouldBe 42
+                }
+            }
+
             "sign & verify supported elliptical signatures" {
                 listOf(
                     ::es256 to JWSES256Algorithm,

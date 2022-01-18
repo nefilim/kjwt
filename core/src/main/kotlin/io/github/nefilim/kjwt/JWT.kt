@@ -8,6 +8,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -15,6 +16,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import java.time.LocalDateTime
@@ -67,7 +69,7 @@ class JWT<T: JWSAlgorithm> private constructor(
 ): JWTClaims {
     companion object {
         class JWTClaimSetBuilder internal constructor() {
-            private val values: MutableMap<String, JsonPrimitive> = LinkedHashMap(10)
+            private val values: MutableMap<String, JsonElement> = LinkedHashMap(10)
 
             fun claim(name: String, value: String) {
                 values[name] = JsonPrimitive(value)
@@ -81,6 +83,9 @@ class JWT<T: JWSAlgorithm> private constructor(
             fun claim(name: String, value: Boolean) {
                 values[name] = JsonPrimitive(value)
             }
+            fun claim(name: String, value: List<String>) {
+                values[name] = JsonArray(value.map { JsonPrimitive(it) })
+            }
 
             fun issuer(i: String) = claim("iss", i)
             fun subject(s: String) = claim("sub", s)
@@ -91,7 +96,7 @@ class JWT<T: JWSAlgorithm> private constructor(
             fun issuedNow() = issuedAt(LocalDateTime.now())
             fun jwtID(id: String) = claim("jti", id)
 
-            fun build(): Map<String, JsonPrimitive> = Collections.unmodifiableMap(values)
+            fun build(): Map<String, JsonElement> = Collections.unmodifiableMap(values)
         }
         val format = Json
         private val prettyFormat = Json {
@@ -140,22 +145,6 @@ class JWT<T: JWSAlgorithm> private constructor(
                 @Suppress("UNCHECKED_CAST")
                 Either.catch { decodedJWT as DecodedJWT<T> }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
             }
-//            return either.eager {
-//                val parts = jwt.split(".")
-//                Either.conditionally (!(parts.size < 2 || parts.size > 3), { KJWTVerificationError.InvalidJWT }, {}).bind()
-//
-//                @Suppress("UNCHECKED_CAST")
-//                val h = Either.catch {
-//                    val header = format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
-//                    println(header)
-//                    header as JOSEHeader<T>
-//                }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
-//                Either.conditionally(h.algorithm == algorithm, { KJWTVerificationError.AlgorithmMismatch }, {})
-//                val claims = Either.catch { format.parseToJsonElement(jwtDecodeString(parts[1])) }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
-//                val claimsMap = Either.catch { (claims as JsonObject) }.mapLeft { KJWTVerificationError.EmptyClaims }.bind()
-//
-//                DecodedJWT(JWT(h, claimsMap), parts)
-//            }
         }
     }
 
@@ -182,7 +171,7 @@ class JWT<T: JWSAlgorithm> private constructor(
     override fun claimValueAsInt(name: String): Option<Int> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.intOrNull)
     override fun claimValueAsLong(name: String): Option<Long> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.longOrNull)
     override fun claimValueAsBoolean(name: String): Option<Boolean> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.booleanOrNull)
-    override fun claimValueAsList(name: String): List<String> = claimSet[name]?.jsonPrimitive?.contentOrNull?.split(",")?.map { it.trim() } ?: emptyList()
+    override fun claimValueAsList(name: String): List<String> = claimSet[name]?.jsonArray?.mapNotNull { (it as JsonPrimitive).contentOrNull?.trim() } ?: emptyList()
 
     override fun keyID(): Option<JWTKeyID> = Option.fromNullable(header.keyID)
     override fun issuer(): Option<String> = claimValue("iss")
