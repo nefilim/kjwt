@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.dependencyCheck)
     alias(libs.plugins.githubRelease)
     `maven-publish`
-    signing
+    id("build-conventions")
 }
 
 repositories {
@@ -49,7 +49,7 @@ githubRelease {
     // You get this from your user settings > developer settings > Personal Access Tokens
     owner("nefilim") // default is the last part of your group. Eg group: "com.github.breadmoirai" => owner: "breadmoirai"
     repo("kjwt") // by default this is set to your project name
-    tagName("v${project.version}") // by default this is set to "v${project.version}"
+    tagName(semver.versionTagName()) // by default this is set to "v${project.version}"
     targetCommitish("main") // by default this is set to "master"
     body(changelog())
     draft(false) // by default this is false
