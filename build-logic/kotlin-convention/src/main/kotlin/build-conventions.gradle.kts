@@ -10,14 +10,14 @@ semver {
     featureBranchRegex(listOf("[a-zA-Z\\-_0-9]+\\/sc-\\d+\\/[a-zA-Z\\-_0-9]+"))
     findProperty("semver.overrideVersion")?.toString()?.let { overrideVersion(it) }
 
-    main {
-        scope(findProperty("semver.main.scope")?.toString() ?: "patch")
-        stage(findProperty("semver.main.stage")?.toString() ?: "final")
+    currentBranch {
+        scope(findProperty("semver.currentBranch.scope")?.toString())
+        stage(findProperty("semver.currentBranch.stage")?.toString())
     }
 }
 
 group = "io.github.nefilim.kjwt"
-version = semver.version()
+version = semver.version.value
 
 configure<com.adarshr.gradle.testlogger.TestLoggerExtension> {
     theme = com.adarshr.gradle.testlogger.theme.ThemeType.STANDARD
