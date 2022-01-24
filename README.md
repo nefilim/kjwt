@@ -32,6 +32,10 @@ Please make sure you have [Arrow Core](https://arrow-kt.io/docs/core/#Gradle-kot
 
 For examples see: [JWTSpec.kt](https://github.com/nefilim/kjwt/blob/main/core/src/test/kotlin/io/github/nefilim/kjwt/JWTSpec.kt) 
 
+## Android
+
+The minimum level of support for Android is 26 as [Base64](https://developer.android.com/reference/java/util/Base64) is being used. 
+
 ## Creating a JWT
 
 ```kotlin

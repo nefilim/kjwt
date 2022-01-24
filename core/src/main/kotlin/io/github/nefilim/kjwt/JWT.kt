@@ -52,6 +52,7 @@ interface JWTClaims {
     fun claimValueAsLong(name: String): Option<Long>
     fun claimValueAsBoolean(name: String): Option<Boolean>
     fun claimValueAsList(name: String): List<String>
+    fun claimNames(): Set<String>
 
     fun keyID(): Option<JWTKeyID>
     fun issuer(): Option<String>
@@ -172,6 +173,7 @@ class JWT<T: JWSAlgorithm> private constructor(
     override fun claimValueAsLong(name: String): Option<Long> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.longOrNull)
     override fun claimValueAsBoolean(name: String): Option<Boolean> = Option.fromNullable(claimSet[name]?.jsonPrimitive?.booleanOrNull)
     override fun claimValueAsList(name: String): List<String> = claimSet[name]?.jsonArray?.mapNotNull { (it as JsonPrimitive).contentOrNull?.trim() } ?: emptyList()
+    override fun claimNames(): Set<String> = claimSet.keys
 
     override fun keyID(): Option<JWTKeyID> = Option.fromNullable(header.keyID)
     override fun issuer(): Option<String> = claimValue("iss")
