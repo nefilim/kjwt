@@ -4,16 +4,8 @@ on:
   workflow_dispatch:
     if: github.ref == 'refs/heads/main'
     inputs:
-      stage:
-        description: 'Stage'
-        required: true
-        default: 'final'
-        type: choice
-        options:
-          - 'rc'
-          - 'final'
-      scope:
-        description: 'Scope'
+      modifier:
+        description: 'Version Modifier'
         required: true
         default: 'patch'
         type: choice
@@ -45,10 +37,11 @@ jobs:
           build-root-directory: ${{ inputs.source }}
           cache-read-only: ${{ github.ref != 'refs/heads/develop' }} # only update the cache on the default branch https://github.com/gradle/gradle-build-action#optimizing-cache-effectiveness
           arguments: |
-            -Psemver.main.scope=${{ github.event.inputs.scope }} -Psemver.main.stage=${{ github.event.inputs.stage }} 
+            -Psemver.modifier=${{ github.event.inputs.modifier }}  
             clean build
             publishToSonatype closeAndReleaseSonatypeStagingRepository 
             githubRelease
+            --stacktrace
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OSS_USER: '${{ secrets.OSS_USER }}'

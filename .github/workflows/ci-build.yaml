@@ -29,26 +29,13 @@ jobs:
           fetch-depth: 0
 
       - name: Build Develop
-        if: ${{ github.ref_name == 'develop' }}
         uses: gradle/gradle-build-action@v2
         with:
           build-root-directory: ${{ inputs.source }}
           cache-read-only: ${{ github.ref != 'refs/heads/develop' }} # only update the cache on the default branch https://github.com/gradle/gradle-build-action#optimizing-cache-effectiveness
           arguments: |
-            -Psemver.develop.stage=beta 
             clean build
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Build Feature
-        if: ${{ github.ref_name != 'develop' && github.ref_name != 'main' }}
-        uses: gradle/gradle-build-action@v2
-        with:
-          build-root-directory: ${{ inputs.source }}
-          cache-read-only: ${{ github.ref != 'refs/heads/develop' }} # only update the cache on the default branch https://github.com/gradle/gradle-build-action#optimizing-cache-effectiveness
-          arguments: |
-            -Psemver.develop.stage=alpha 
-            clean build
+            --stacktrace
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
