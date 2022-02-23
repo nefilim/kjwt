@@ -4,20 +4,15 @@ plugins {
 }
 
 semver {
-    verbose(true)
     tagPrefix("v")
     initialVersion("0.0.1")
-    featureBranchRegex(listOf("[a-zA-Z\\-_0-9]+\\/sc-\\d+\\/[a-zA-Z\\-_0-9]+"))
     findProperty("semver.overrideVersion")?.toString()?.let { overrideVersion(it) }
-
-    currentBranch {
-        scope(findProperty("semver.currentBranch.scope")?.toString())
-        stage(findProperty("semver.currentBranch.stage")?.toString())
-    }
+    val semVerModifier = findProperty("semver.modifier")?.toString()?.let { buildVersionModifier(it) } ?: { nextPatch() }
+    versionModifier(semVerModifier)
 }
 
 group = "io.github.nefilim.kjwt"
-version = semver.version.value
+version = semver.version
 
 configure<com.adarshr.gradle.testlogger.TestLoggerExtension> {
     theme = com.adarshr.gradle.testlogger.theme.ThemeType.STANDARD
