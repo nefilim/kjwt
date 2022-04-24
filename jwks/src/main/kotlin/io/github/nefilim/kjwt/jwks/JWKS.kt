@@ -1,16 +1,8 @@
 package io.github.nefilim.kjwt.jwks
 
-import arrow.core.Either
+import arrow.core.*
 import arrow.core.computations.either
-import arrow.core.flatMap
-import arrow.core.left
-import arrow.core.right
-import arrow.core.sequenceEither
-import io.github.nefilim.kjwt.JWSAlgorithm
-import io.github.nefilim.kjwt.JWSAlgorithmSerializer
-import io.github.nefilim.kjwt.JWSECDSAAlgorithm
-import io.github.nefilim.kjwt.JWSRSAAlgorithm
-import io.github.nefilim.kjwt.JWTKeyID
+import io.github.nefilim.kjwt.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -24,10 +16,14 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.PolymorphicSerializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.jsonArray
 import java.math.BigInteger
 import java.net.URL
 import java.security.AlgorithmParameters
@@ -48,6 +44,9 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {  }
 
 @Serializable
 data class JWK<T: JWSAlgorithm>(
@@ -139,9 +138,37 @@ data class JWK<T: JWSAlgorithm>(
 }
 
 @Serializable
-data class JWKS<T: JWSAlgorithm>(
-    val keys: List<JWK<T>>
+data class JWKS(
+    @Serializable(JWKListSerializer::class) val keys: List<JWK<JWSAlgorithm>>
 )
+
+object JWKListSerializer: KSerializer<List<JWK<JWSAlgorithm>>> {
+    override fun deserialize(decoder: Decoder): List<JWK<JWSAlgorithm>> {
+        return with(decoder as JsonDecoder) {
+            decodeJsonElement().jsonArray.mapNotNull {
+                try {
+                    json.decodeFromJsonElement(JWK.serializer(PolymorphicSerializer(JWSAlgorithm::class)), it)
+                } catch (e: Exception) {
+                    when (e) {
+                        is SerializationException, is UnsupportedAlgorithmException -> {
+                            logger.warn { "ignoring JWK with deserialization problem $e " }
+                            null
+                        }
+                        else ->
+                            throw e
+                    }
+                }
+            }
+        }
+    }
+
+    private val listSerializer = ListSerializer(JWK.serializer(PolymorphicSerializer(JWSAlgorithm::class)))
+    override val descriptor: SerialDescriptor = listSerializer.descriptor
+
+    override fun serialize(encoder: Encoder, value: List<JWK<JWSAlgorithm>>) {
+        listSerializer.serialize(encoder, value)
+    }
+}
 
 sealed interface JWKError {
     object AlgorithmKeyMismatch: JWKError
@@ -207,7 +234,9 @@ object WellKnownJWKSProvider {
         either {
             val json = jwksJSONProvider(context, coroutineContext).bind()
             val jwks = Either.catch {
-                WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(PolymorphicSerializer(JWSAlgorithm::class)), json)
+//                WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(PolymorphicSerializer(JWSAlgorithm::class)), json)
+                WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(), json)
+//                WellKnownJWKSProvider.json.decodeFromString(JWKListSerializer, json)
             }.mapLeft { JWKError.Exceptionally(it) }.bind()
             jwks.keys.map { jwk -> jwk.build<P>().map { jwk.keyID to it } }.sequenceEither().bind().toMap()
         }

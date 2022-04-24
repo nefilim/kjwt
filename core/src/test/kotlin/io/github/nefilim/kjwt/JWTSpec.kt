@@ -30,12 +30,15 @@ import io.kotest.assertions.arrow.core.shouldBeSome
 import io.kotest.assertions.arrow.core.shouldBeValid
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
+import mu.KotlinLogging
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import com.nimbusds.jwt.SignedJWT as NimbusSignedJWT
 
 class JWTSpec: WordSpec() {
+    private val logger = KotlinLogging.logger { }
+
     init {
         "JWT" should {
             "build JWT claim set" {
@@ -143,7 +146,7 @@ class JWTSpec: WordSpec() {
 
                     val signedJWT = rawJWT.sign(privateKey)
                     signedJWT.shouldBeRight().also {
-                        println(it.rendered)
+                        logger.info { it.rendered }
                         NimbusSignedJWT.parse(it.rendered).verify(ECDSAVerifier(publicKey)) shouldBe true
                         verifySignature(it.rendered, publicKey, pair.second).shouldBeRight() shouldBe it.jwt
                     }
