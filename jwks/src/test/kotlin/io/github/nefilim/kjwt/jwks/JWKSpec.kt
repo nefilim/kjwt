@@ -56,14 +56,14 @@ class JWKSSpec: WordSpec() {
                     algorithm shouldBe (JWSES256Algorithm)
                     shouldBeTypeOf<JWK<JWSES256Algorithm>>() // results in smart cast for the next line
                     buildKey().shouldBeRight()
-                    build<RSAPublicKey>().shouldBeLeft(JWKError.AlgorithmKeyMismatch)
+                    build<RSAPublicKey>().shouldBeLeft().shouldBeInstanceOf<JWKError.AlgorithmKeyMismatch>()
                 }
 
                 with(json.decodeFromString(JWK.serializer(PolymorphicSerializer(JWSAlgorithm::class)), RSAJWK)) {
                     algorithm shouldBe (JWSRSA256Algorithm)
                     shouldBeTypeOf<JWK<JWSRSA256Algorithm>>() // results in smart cast for the next line
                     buildKey().shouldBeRight()
-                    build<ECPublicKey>().shouldBeLeft(JWKError.AlgorithmKeyMismatch)
+                    build<ECPublicKey>().shouldBeLeft().shouldBeInstanceOf<JWKError.AlgorithmKeyMismatch>()
                 }
             }
         }
@@ -84,7 +84,8 @@ class JWKSSpec: WordSpec() {
                 })
             }
             "gracefully handle unsupported algorithms" {
-                WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(), UnsupportedAlgorithmInJWK).keys.size shouldBe 2
+                val jwks = WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(), UnsupportedAlgorithmInJWK)
+                jwks.keys.size shouldBe 2
             }
         }
         "CachedJWKS" should {
@@ -116,7 +117,7 @@ inline fun <reified P: PublicKey>randomJWKS(keyID: JWTKeyID): JWKSProvider<P> = 
             mapOf(keyID to generateKeyPair(JWSES256Algorithm).first as P).right()
         }
         else ->
-            JWKError.AlgorithmKeyMismatch.left()
+            JWKError.AlgorithmKeyMismatch(keyID).left()
     }
 }
 

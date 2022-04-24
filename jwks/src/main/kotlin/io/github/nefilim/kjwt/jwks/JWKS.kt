@@ -46,7 +46,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {  }
+val logger = KotlinLogging.logger {  }
 
 @Serializable
 data class JWK<T: JWSAlgorithm>(
@@ -110,9 +110,9 @@ data class JWK<T: JWSAlgorithm>(
                     val ecPublicKeySpec = ECPublicKeySpec(ecPoint, ecParameterSpec)
                     (keyFactory.generatePublic(ecPublicKeySpec) as P).right()
                 } catch (e: ClassCastException) {
-                    JWKError.AlgorithmKeyMismatch.left()
+                    JWKError.AlgorithmKeyMismatch(this.keyID).left()
                 } catch (e: GeneralSecurityException) {
-                    JWKError.InvalidKey(e).left()
+                    JWKError.InvalidKey(keyID, e).left()
                 } catch (e: Exception) {
                     JWKError.Exceptionally(e).left()
                 }
@@ -124,15 +124,15 @@ data class JWK<T: JWSAlgorithm>(
                     val exponent = BigInteger(1, Base64.getUrlDecoder().decode(publicKeyExponent))
                     (kf.generatePublic(RSAPublicKeySpec(modulus, exponent)) as P).right()
                 } catch (e: ClassCastException) {
-                    JWKError.AlgorithmKeyMismatch.left()
+                    JWKError.AlgorithmKeyMismatch(keyID).left()
                 } catch (e: GeneralSecurityException) {
-                    JWKError.InvalidKey(e).left()
+                    JWKError.InvalidKey(keyID, e).left()
                 } catch (e: Exception) {
                     JWKError.Exceptionally(e).left()
                 }
             }
             else ->
-                JWKError.UnsupportedAlgorithm(algorithm).left()
+                JWKError.UnsupportedAlgorithm(keyID, algorithm).left()
         }
     }
 }
@@ -171,9 +171,9 @@ object JWKListSerializer: KSerializer<List<JWK<JWSAlgorithm>>> {
 }
 
 sealed interface JWKError {
-    object AlgorithmKeyMismatch: JWKError
-    data class InvalidKey(val cause: Throwable): JWKError
-    data class UnsupportedAlgorithm(val alg: JWSAlgorithm): JWKError
+    data class AlgorithmKeyMismatch(val keyID: JWTKeyID): JWKError
+    data class InvalidKey(val keyID: JWTKeyID, val cause: Throwable): JWKError
+    data class UnsupportedAlgorithm(val keyID: JWTKeyID, val alg: JWSAlgorithm): JWKError
     data class Exceptionally(val cause: Throwable): JWKError
     data class NoSuchKey(val keyID: JWTKeyID): JWKError
 }
@@ -234,11 +234,11 @@ object WellKnownJWKSProvider {
         either {
             val json = jwksJSONProvider(context, coroutineContext).bind()
             val jwks = Either.catch {
-//                WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(PolymorphicSerializer(JWSAlgorithm::class)), json)
                 WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(), json)
-//                WellKnownJWKSProvider.json.decodeFromString(JWKListSerializer, json)
             }.mapLeft { JWKError.Exceptionally(it) }.bind()
-            jwks.keys.map { jwk -> jwk.build<P>().map { jwk.keyID to it } }.sequenceEither().bind().toMap()
+            jwks.keys.map { jwk ->
+                jwk.build<P>().map { jwk.keyID to it }.also { logger.info { "Built JWK $it" } }
+            }.sequenceEither().bind().toMap()
         }
     }
 }
