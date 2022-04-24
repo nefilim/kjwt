@@ -12,6 +12,7 @@ dependencies {
         platform(libs.arrow.stack),
         libs.arrow.core,
         libs.kotlin.reflect,
+        libs.kotlinLogging,
         libs.kotlinx.coroutines.core,
         libs.kotlinx.serialization.json,
     ).map {
@@ -22,7 +23,6 @@ dependencies {
         libs.kotest.runner,
         libs.kotest.assertions.core,
         libs.kotest.assertions.arrow,
-        libs.kotlinLogging,
         libs.logbackClassic,
     ).map {
         testImplementation(it)

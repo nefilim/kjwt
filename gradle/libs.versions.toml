@@ -1,6 +1,6 @@
 [versions]
-kotlin = "1.6.10"
-kotlinXCoroutines = "1.6.0"
+kotlin = "1.6.21"
+kotlinXCoroutines = "1.6.1"
 kotlinXSerialization = "1.3.2"
 
 # third party
