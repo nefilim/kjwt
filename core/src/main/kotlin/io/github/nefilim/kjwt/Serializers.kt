@@ -9,7 +9,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-class UnsupportedAlgorithmException(val alg: String): Exception("unsupported JWS algorithm: [$alg]")
+class UnsupportedAlgorithmException(val algorithm: String): Exception("unsupported JWS algorithm: [$algorithm]")
 
 private val AllJWSAlgorithmToHeaderIDs = AllAlgorithms.associateBy { it.headerID }
 
@@ -19,7 +19,7 @@ object JWSAlgorithmSerializer: KSerializer<JWSAlgorithm> {
 
     override fun deserialize(decoder: Decoder): JWSAlgorithm {
         val alg = decoder.decodeString().trim().uppercase()
-        return AllJWSAlgorithmToHeaderIDs[alg] ?: throw UnsupportedAlgorithmException("unknown JWSAlgorithm: [$alg]")
+        return AllJWSAlgorithmToHeaderIDs[alg] ?: throw UnsupportedAlgorithmException(alg)
     }
 
     override fun serialize(encoder: Encoder, value: JWSAlgorithm) {
