@@ -35,7 +35,7 @@ fun String?.toJWTKeyID(): JWTKeyID? = this?.let { JWTKeyID(it)}
 @Serializable
 data class JOSEHeader<T: JWSAlgorithm>(
     @SerialName("alg") @Serializable(JWSAlgorithmSerializer::class) val algorithm: T,
-    @SerialName("typ") val type: JOSEType,
+    @SerialName("typ") @Serializable(JOSETypeSerializer::class) val type: JOSEType,
     @SerialName("kid") val keyID: JWTKeyID? = null,
 ) {
     fun toJSON(): String {

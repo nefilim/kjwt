@@ -28,3 +28,19 @@ object JWSAlgorithmSerializer: KSerializer<JWSAlgorithm> {
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("JWSAlgorithm", PrimitiveKind.STRING)
 }
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializer(forClass = JWSAlgorithm::class)
+object JOSETypeSerializer: KSerializer<JOSEType> {
+
+    override fun deserialize(decoder: Decoder): JOSEType {
+        val typ = decoder.decodeString().trim().uppercase()
+        return JOSEType.valueOf(typ)
+    }
+
+    override fun serialize(encoder: Encoder, value: JOSEType) {
+        encoder.encodeString(value.id)
+    }
+
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("JOSEType", PrimitiveKind.STRING)
+}
