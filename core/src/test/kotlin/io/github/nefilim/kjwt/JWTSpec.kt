@@ -1,6 +1,7 @@
 package io.github.nefilim.kjwt
 
 import arrow.core.ValidatedNel
+import arrow.core.getOrElse
 import arrow.core.some
 import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.MACVerifier
@@ -34,6 +35,7 @@ import mu.KotlinLogging
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import com.nimbusds.jwt.SignedJWT as NimbusSignedJWT
 
 class JWTSpec: WordSpec() {
@@ -104,6 +106,34 @@ class JWTSpec: WordSpec() {
                 }
 
                 JWT.decodeT(signedJWT.rendered, JWSRSA256Algorithm).shouldBeLeft(KJWTVerificationError.AlgorithmMismatch)
+            }
+
+            "decode spec violating types" {
+                val rawJWT = es256 {
+                    subject("1234567890")
+                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                }
+                // create a token with a spec violating lowercase type of "jwt"
+                val jwtString = listOf(
+                    """
+                        {
+                            "alg": "${rawJWT.header.algorithm.headerID}",
+                            "typ": "jwt" 
+                        }
+                    """.trimIndent(),
+                    """
+                        {
+                            "sub": "${rawJWT.subject().getOrElse { "" }}",
+                            "iat": ${rawJWT.issuedAt().map { it.toEpochSecond(ZoneOffset.UTC) }.getOrElse { 0 }}
+                        }
+                    """.trimIndent()
+                ).joinToString(".") {
+                    jwtEncodeBytes(it.toByteArray(Charsets.UTF_8))
+                }
+                JWT.decode(jwtString).shouldBeRight().also {
+                    it.parts.size shouldBe 2
+                    it.jwt shouldBe rawJWT
+                }
             }
 
             "support arbitrary JSON claim values" {
