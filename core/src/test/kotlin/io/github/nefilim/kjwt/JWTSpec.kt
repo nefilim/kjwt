@@ -15,7 +15,6 @@ import io.github.nefilim.kjwt.ClaimsVerification.requiredOptionClaim
 import io.github.nefilim.kjwt.ClaimsVerification.subject
 import io.github.nefilim.kjwt.ClaimsVerification.validateClaims
 import io.github.nefilim.kjwt.JWT.Companion.es256
-import io.github.nefilim.kjwt.JWT.Companion.es256WithoutTypeHeader
 import io.github.nefilim.kjwt.JWT.Companion.es256k
 import io.github.nefilim.kjwt.JWT.Companion.es384
 import io.github.nefilim.kjwt.JWT.Companion.es512
@@ -120,33 +119,6 @@ class JWTSpec: WordSpec() {
                         {
                             "alg": "${rawJWT.header.algorithm.headerID}",
                             "typ": "jwt" 
-                        }
-                    """.trimIndent(),
-                    """
-                        {
-                            "sub": "${rawJWT.subject().getOrElse { "" }}",
-                            "iat": ${rawJWT.issuedAt().map { it.toEpochSecond(ZoneOffset.UTC) }.getOrElse { 0 }}
-                        }
-                    """.trimIndent()
-                ).joinToString(".") {
-                    jwtEncodeBytes(it.toByteArray(Charsets.UTF_8))
-                }
-                JWT.decode(jwtString).shouldBeRight().also {
-                    it.parts.size shouldBe 2
-                    it.jwt shouldBe rawJWT
-                }
-            }
-
-            "decode JWT with missing type header" {
-                val rawJWT = es256WithoutTypeHeader {
-                    subject("1234567890")
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
-                }
-                // create a token with a spec violating lowercase type of "jwt"
-                val jwtString = listOf(
-                    """
-                        {
-                            "alg": "${rawJWT.header.algorithm.headerID}"
                         }
                     """.trimIndent(),
                     """

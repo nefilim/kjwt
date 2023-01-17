@@ -35,7 +35,7 @@ fun String?.toJWTKeyID(): JWTKeyID? = this?.let { JWTKeyID(it)}
 @Serializable
 data class JOSEHeader<T: JWSAlgorithm>(
     @SerialName("alg") @Serializable(JWSAlgorithmSerializer::class) val algorithm: T,
-    @SerialName("typ") @Serializable(JOSETypeSerializer::class) val type: JOSEType? = null,
+    @SerialName("typ") @Serializable(JOSETypeSerializer::class) val type: JOSEType,
     @SerialName("kid") val keyID: JWTKeyID? = null,
 ) {
     fun toJSON(): String {
@@ -104,7 +104,6 @@ class JWT<T: JWSAlgorithm> private constructor(
             prettyPrint = true
         }
 
-        internal fun es256WithoutTypeHeader(claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256Algorithm> = buildJWT(JOSEHeader(JWSES256Algorithm), claims)
         fun es256(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256Algorithm> = buildJWT(JOSEHeader(JWSES256Algorithm, JOSEType.JWT, keyID), claims)
         fun es256k(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES256KAlgorithm> = buildJWT(JOSEHeader(JWSES256KAlgorithm, JOSEType.JWT, keyID), claims)
         fun es384(keyID: JWTKeyID? = null, claims: JWTClaimSetBuilder.() -> Unit): JWT<JWSES384Algorithm> = buildJWT(JOSEHeader(JWSES384Algorithm, JOSEType.JWT, keyID), claims)
@@ -132,9 +131,7 @@ class JWT<T: JWSAlgorithm> private constructor(
 
                 val h = Either.catch {
                     format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
-                }.mapLeft {
-                    println(it)
-                    KJWTVerificationError.AlgorithmMismatch }.bind()
+                }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
                 val claims = Either.catch { format.parseToJsonElement(jwtDecodeString(parts[1])) }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
                 val claimsMap = Either.catch { (claims as JsonObject) }.mapLeft { KJWTVerificationError.EmptyClaims }.bind()
 
