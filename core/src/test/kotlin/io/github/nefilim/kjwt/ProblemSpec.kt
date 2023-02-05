@@ -37,12 +37,12 @@ class ProblemSpec: WordSpec() {
 }
 
 suspend fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>processToken(jwt: String, jwtOps: JWTOperations<T, PubK, PrivK>): ClaimsValidatorResult {
-    val validator = validateClaims(notBefore, expired)
+    val validator = validateClaims(notBefore(), expired())
     return verify<T, PubK, PrivK>(jwt, jwtOps.keyProvider, jwtOps.algorithm, validator)
 }
 
 suspend fun <T: JWSECDSAAlgorithm>processKnownToken(jwt: String, jwtOps: ECJWTOperations<T>): ClaimsValidatorResult {
-    val validator = validateClaims(notBefore, expired)
+    val validator = validateClaims(notBefore(), expired())
     return verify(jwt, jwtOps.keyProvider, validator, jwtOps.algorithm)
 }
 

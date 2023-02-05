@@ -19,8 +19,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Clock
+import java.time.Instant
 import java.util.*
 
 enum class JOSEType(val id: String) {
@@ -58,9 +58,9 @@ interface JWTClaims {
     fun issuer(): Option<String>
     fun subject(): Option<String>
     fun audience(): Option<String>
-    fun expiresAt(): Option<LocalDateTime>
-    fun notBefore(): Option<LocalDateTime>
-    fun issuedAt(): Option<LocalDateTime>
+    fun expiresAt(): Option<Instant>
+    fun notBefore(): Option<Instant>
+    fun issuedAt(): Option<Instant>
     fun jwtID(): Option<String>
 }
 
@@ -91,10 +91,10 @@ class JWT<T: JWSAlgorithm> private constructor(
             fun issuer(i: String) = claim("iss", i)
             fun subject(s: String) = claim("sub", s)
             fun audience(a: String) = claim("aud", a)
-            fun expiresAt(d: LocalDateTime) = claim("exp", d.jwtNumericDate())
-            fun notBefore(d: LocalDateTime) = claim("nbf", d.jwtNumericDate())
-            fun issuedAt(d: LocalDateTime) = claim("iat", d.jwtNumericDate())
-            fun issuedNow() = issuedAt(LocalDateTime.now())
+            fun expiresAt(d: Instant) = claim("exp", d.jwtNumericDate())
+            fun notBefore(d: Instant) = claim("nbf", d.jwtNumericDate())
+            fun issuedAt(d: Instant) = claim("iat", d.jwtNumericDate())
+            fun issuedNow(clock: Clock = Clock.systemUTC()) = issuedAt(clock.instant())
             fun jwtID(id: String) = claim("jti", id)
 
             fun build(): Map<String, JsonElement> = Collections.unmodifiableMap(values)
@@ -182,9 +182,9 @@ class JWT<T: JWSAlgorithm> private constructor(
     override fun issuer(): Option<String> = claimValue("iss")
     override fun subject(): Option<String> = claimValue("sub")
     override fun audience(): Option<String> = claimValue("aud")
-    override fun expiresAt(): Option<LocalDateTime> = claimValueAsLong("exp").map { it.fromJWTNumericDate() }
-    override fun notBefore(): Option<LocalDateTime> = claimValueAsLong("nbf").map { it.fromJWTNumericDate() }
-    override fun issuedAt(): Option<LocalDateTime> = claimValueAsLong("iat").map { it.fromJWTNumericDate() }
+    override fun expiresAt(): Option<Instant> = claimValueAsLong("exp").map { it.fromJWTNumericDate() }
+    override fun notBefore(): Option<Instant> = claimValueAsLong("nbf").map { it.fromJWTNumericDate() }
+    override fun issuedAt(): Option<Instant> = claimValueAsLong("iat").map { it.fromJWTNumericDate() }
     override fun jwtID(): Option<String> = claimValue("jti")
 
     // generated
@@ -226,8 +226,8 @@ data class SignedJWT<T: JWSAlgorithm>(
 }
 
 // https://datatracker.ietf.org/doc/html/rfc7519#section-2
-internal fun LocalDateTime.jwtNumericDate(): Long = this.toEpochSecond(ZoneOffset.UTC)
-internal fun Long.fromJWTNumericDate(): LocalDateTime = LocalDateTime.ofEpochSecond(this, 0, ZoneOffset.UTC)
+internal fun Instant.jwtNumericDate(): Long = this.epochSecond
+internal fun Long.fromJWTNumericDate(): Instant = Instant.ofEpochSecond(this, 0L)
 fun jwtEncodeBytes(data: ByteArray): String = String(Base64.getUrlEncoder().encode(data)).trimEnd('=') // remove trailing '=' as per JWT spec
 fun jwtDecodeString(data: String): String = String(Base64.getUrlDecoder().decode(data))
 internal fun decodeString(data: String): ByteArray = Base64.getUrlDecoder().decode(data)
