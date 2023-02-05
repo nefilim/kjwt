@@ -33,10 +33,8 @@ import io.kotest.assertions.arrow.core.shouldBeValid
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import mu.KotlinLogging
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
+import java.time.temporal.ChronoUnit
 import com.nimbusds.jwt.SignedJWT as NimbusSignedJWT
 
 class JWTSpec: WordSpec() {
@@ -50,14 +48,14 @@ class JWTSpec: WordSpec() {
                     issuer("nefilim")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }) {
                     keyID().shouldBeSome().id shouldBe "123"
                     issuer().shouldBeSome() shouldBe "nefilim"
                     subject().shouldBeSome() shouldBe "1234567890"
                     claimValue("name").shouldBeSome() shouldBe "John Doe"
                     claimValueAsBoolean("admin").shouldBeSome() shouldBe true
-                    issuedAt().shouldBeSome() shouldBe LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC"))
+                    issuedAt().shouldBeSome() shouldBe Instant.ofEpochSecond(1516239022)
                 }
             }
 
@@ -66,7 +64,7 @@ class JWTSpec: WordSpec() {
                     subject("1234567890")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 jwt.encode() shouldBe "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0"
@@ -75,7 +73,7 @@ class JWTSpec: WordSpec() {
                     subject("1234567890")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 jwtWithKeyID.encode() shouldBe "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0"
@@ -86,7 +84,7 @@ class JWTSpec: WordSpec() {
                     subject("1234567890")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 JWT.decode(rawJWT.encode()).shouldBeRight().also {
@@ -112,7 +110,7 @@ class JWTSpec: WordSpec() {
             "decode spec violating types" {
                 val rawJWT = es256 {
                     subject("1234567890")
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
                 // create a token with a spec violating lowercase type of "jwt"
                 val jwtString = listOf(
@@ -125,7 +123,7 @@ class JWTSpec: WordSpec() {
                     """
                         {
                             "sub": "${rawJWT.subject().getOrElse { "" }}",
-                            "iat": ${rawJWT.issuedAt().map { it.toEpochSecond(ZoneOffset.UTC) }.getOrElse { 0 }}
+                            "iat": ${rawJWT.issuedAt().map { it.epochSecond }.getOrElse { 0 }}
                         }
                     """.trimIndent()
                 ).joinToString(".") {
@@ -140,7 +138,7 @@ class JWTSpec: WordSpec() {
             "decode JWT with missing type header" {
                 val rawJWT = es256WithoutTypeHeader {
                     subject("1234567890")
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
                 // create a token with a spec violating lowercase type of "jwt"
                 val jwtString = listOf(
@@ -152,7 +150,7 @@ class JWTSpec: WordSpec() {
                     """
                         {
                             "sub": "${rawJWT.subject().getOrElse { "" }}",
-                            "iat": ${rawJWT.issuedAt().map { it.toEpochSecond(ZoneOffset.UTC) }.getOrElse { 0 }}
+                            "iat": ${rawJWT.issuedAt().map { it.epochSecond }.getOrElse { 0 }}
                         }
                     """.trimIndent()
                 ).joinToString(".") {
@@ -172,7 +170,7 @@ class JWTSpec: WordSpec() {
                     claim("admin", true)
                     claim("thenumber", 42)
                     claim("thelist", thelist)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 JWT.decode(rawJWT.encode()).shouldBeRight().also {
@@ -197,7 +195,7 @@ class JWTSpec: WordSpec() {
                         issuer("nefilim")
                         claim("name", "John Doe")
                         claim("admin", true)
-                        issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                        issuedAt(Instant.ofEpochSecond(1516239022))
                     }
 
                     val (publicKey, privateKey) = generateKeyPair(rawJWT.header.algorithm)
@@ -221,7 +219,7 @@ class JWTSpec: WordSpec() {
                         subject("1234567890")
                         claim("name", "John Doe")
                         claim("admin", true)
-                        issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                        issuedAt(Instant.ofEpochSecond(1516239022))
                     }
 
                     val (publicKey, privateKey) = generateKeyPair(rawJWT.header.algorithm)
@@ -244,7 +242,7 @@ class JWTSpec: WordSpec() {
                         subject("1234567890")
                         claim("name", "John Doe")
                         claim("admin", true)
-                        issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                        issuedAt(Instant.ofEpochSecond(1516239022))
                     }
 
                     val secret = "iwFPzTFi41xBhlvqjYPiX4NKRFqAubl5zHAjeuK9s0MjvcCOgj84RgxRU2u8k7dUY1czPSCs4wAlePkLFTnsRpcaJdf07MJzloG63W1Mcfg9CCW9WOD80aOmkRnuYll5w8CYFj2qMP5D69XaGcjsu0rw6cjgkBhDDltSg5VZtDPYkGVuYw5NSUqk90PtKT9ZmF88bI2gadjhl3GS5ZBfOEisgNHnguQNfPFT3TDq8c5pLHoyAsErbNYaiwOjRfe2"
@@ -262,7 +260,7 @@ class JWTSpec: WordSpec() {
                     subject("1234567890")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 // below stanzas should NOT compile, type system should prevent you from signing a JWT with the wrong kind of key
@@ -281,13 +279,13 @@ class JWTSpec: WordSpec() {
                     audience("http://thecompany.com")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    expiresAt(LocalDateTime.now().plusHours(1))
-                    notBefore(LocalDateTime.now().minusMinutes(1))
+                    expiresAt(Instant.now().plus(1, ChronoUnit.HOURS))
+                    notBefore(Instant.now().minus(1, ChronoUnit.MINUTES))
                     issuedNow()
                 }
 
                 fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
-                    validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
+                    validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
 
                 standardValidation(jwt).shouldBeValid()
 
@@ -297,9 +295,9 @@ class JWTSpec: WordSpec() {
                     audience("http://phish.com")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    expiresAt(LocalDateTime.now().minusHours(1))
-                    notBefore(LocalDateTime.now().plusMinutes(1))
-                    issuedAt(LocalDateTime.now())
+                    expiresAt(Instant.now().minus(1, ChronoUnit.MINUTES))
+                    notBefore(Instant.now().plus(1, ChronoUnit.MINUTES))
+                    issuedAt(Instant.now())
                 }
 
                 standardValidation(invalidJWT).shouldBeInvalid().toSet()
@@ -314,14 +312,35 @@ class JWTSpec: WordSpec() {
                     )
             }
 
+            "cross timezone issues and validation" {
+                fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
+                    validateClaims(notBefore(), expired())(claims)
+
+                val utcClock = Clock.systemUTC()
+                val defaultClock = Clock.systemDefaultZone()
+
+                val invalidJWT = es256() {
+                    subject("123456789")
+                    issuer("theothercompany")
+                    audience("http://phish.com")
+                    claim("name", "John Doe")
+                    claim("admin", true)
+                    expiresAt(defaultClock.instant().plus(1, ChronoUnit.MINUTES))
+                    notBefore(utcClock.instant().minus(1, ChronoUnit.SECONDS))
+                    issuedNow()
+                }
+
+                standardValidation(invalidJWT).shouldBeValid()
+            }
+
             "support custom validations for required/optional claims" {
                 val jwt = es256() {
                     subject("1234567890")
                     issuer("theco")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    notBefore(LocalDateTime.now().plusMinutes(1))
-                    issuedAt(LocalDateTime.ofInstant(Instant.ofEpochSecond(1516239022), ZoneId.of("UTC")))
+                    notBefore(Instant.now().plus(1, ChronoUnit.MINUTES))
+                    issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
                 validateClaims(requiredOptionClaim("admin", { claimValueAsBoolean("admin") }) { it })(jwt).shouldBeValid()
@@ -342,13 +361,13 @@ class JWTSpec: WordSpec() {
                     audience("http://thecompany.com")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    expiresAt(LocalDateTime.now().plusHours(1))
-                    notBefore(LocalDateTime.now().minusMinutes(1))
+                    expiresAt(Instant.now().plus(1, ChronoUnit.HOURS))
+                    notBefore(Instant.now().minus(1, ChronoUnit.MINUTES))
                     issuedNow()
                 }
 
                 val standardValidation: ClaimsValidator = { claims ->
-                    validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
+                    validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
                 }
                 val signedJWT = jwt.sign(privateKey).shouldBeRight()
                 verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()
@@ -372,13 +391,13 @@ class JWTSpec: WordSpec() {
                     audience("http://thecompany.com")
                     claim("name", "John Doe")
                     claim("admin", true)
-                    expiresAt(LocalDateTime.now().plusHours(1))
-                    notBefore(LocalDateTime.now().minusMinutes(1))
+                    expiresAt(Instant.now().plus(1, ChronoUnit.HOURS))
+                    notBefore(Instant.now().minus(1, ChronoUnit.MINUTES))
                     issuedNow()
                 }
 
                 val standardValidation: ClaimsValidator = { claims ->
-                    validateClaims(notBefore, expired, issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
+                    validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
                 }
                 val signedJWT = jwt.sign(privateKey).shouldBeRight()
                 verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()

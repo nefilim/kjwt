@@ -9,7 +9,8 @@ import arrow.core.invalidNel
 import arrow.core.validNel
 import arrow.core.zip
 import arrow.typeclasses.Semigroup
-import java.time.LocalDateTime
+import java.time.Clock
+import java.time.temporal.ChronoUnit
 
 sealed interface KJWTValidationError: KJWTVerificationError {
     object TokenExpired: KJWTValidationError
@@ -31,9 +32,19 @@ object ClaimsVerification {
 
     fun audience(audience: String): ClaimsValidator = requiredOptionClaim("audience", { audience() }, { it == audience }, KJWTValidationError.InvalidAudience)
 
-    val expired: ClaimsValidator = requiredOptionClaim("expired", { expiresAt() }, { it.isAfter(LocalDateTime.now()) }, KJWTValidationError.TokenExpired)
+    fun expired(clock: Clock = Clock.systemUTC()): ClaimsValidator = requiredOptionClaim(
+        "expired",
+        { expiresAt() },
+        { it.isAfter(clock.instant().truncatedTo(ChronoUnit.SECONDS)) },
+        KJWTValidationError.TokenExpired
+    )
 
-    val notBefore: ClaimsValidator = requiredOptionClaim("notBefore", { notBefore() }, { it.isBefore(LocalDateTime.now()) }, KJWTValidationError.TokenNotValidYet)
+    fun notBefore(clock: Clock = Clock.systemUTC()): ClaimsValidator = requiredOptionClaim(
+        "notBefore",
+        { notBefore() },
+        { it.isBefore(clock.instant().truncatedTo(ChronoUnit.SECONDS)) },
+        KJWTValidationError.TokenNotValidYet
+    )
 
     fun <T>requiredOptionClaim(
         name: String,
