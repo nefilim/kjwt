@@ -10,7 +10,6 @@ dependencies {
     listOf(
         projects.core,
         platform(libs.arrow.stack),
-        libs.arrow.core,
         libs.kotlin.reflect,
         libs.kotlinLogging,
         libs.kotlinx.coroutines.core,
@@ -18,6 +17,8 @@ dependencies {
     ).map {
         api(it)
     }
+
+    api(libs.arrow.core)
 
     listOf(
         libs.kotest.runner,

@@ -8,7 +8,6 @@ plugins {
 dependencies {
     listOf(
         platform(libs.arrow.stack),
-        libs.arrow.core,
         libs.kotlinLogging,
         libs.kotlin.reflect,
         libs.kotlinx.coroutines.core,
@@ -16,7 +15,9 @@ dependencies {
     ).map {
         implementation(it)
     }
-    
+
+    api(libs.arrow.core)
+
     listOf(
         libs.kotest.runner,
         libs.kotest.assertions.core,

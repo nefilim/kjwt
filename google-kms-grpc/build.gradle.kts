@@ -14,10 +14,10 @@ plugins {
 
 dependencies {
     protobuf(libs.google.kms.protobuf)
+
     listOf(
         projects.core,
         platform(libs.arrow.stack),
-        libs.arrow.core,
         libs.grpc.protobuf,
         libs.grpc.stub,
         libs.grpc.stubKotlin,
@@ -26,6 +26,8 @@ dependencies {
     ).map {
         api(it)
     }
+
+    api(libs.arrow.core)
 
     listOf(
         libs.kotest.runner,
