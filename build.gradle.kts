@@ -1,11 +1,11 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+//import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.tasktree)
     alias(libs.plugins.semver)
     alias(libs.plugins.nexus.publish)
-    alias(libs.plugins.dependencyUpdates)
+//    alias(libs.plugins.dependencyUpdates)
     alias(libs.plugins.dependencyCheck)
     alias(libs.plugins.githubRelease)
     `maven-publish`
@@ -17,19 +17,19 @@ repositories {
     mavenCentral()
 }
 
-dependencyCheck {
-    failOnError = true
-
-    suppressionFile = ".dependency-check-suppression.xml"
-    analyzers.experimentalEnabled = false
-    analyzers.assemblyEnabled = false
-    analyzers.msbuildEnabled = false
-    analyzers.nuspecEnabled = false
-    analyzers.nugetconfEnabled = false
-    analyzers.pyPackageEnabled = false
-    analyzers.pyDistributionEnabled = false
-    analyzers.rubygemsEnabled = false
-}
+//dependencyCheck {
+//    failOnError = true
+//
+//    suppressionFile = ".dependency-check-suppression.xml"
+//    analyzers.experimentalEnabled = false
+//    analyzers.assemblyEnabled = false
+//    analyzers.msbuildEnabled = false
+//    analyzers.nuspecEnabled = false
+//    analyzers.nugetconfEnabled = false
+//    analyzers.pyPackageEnabled = false
+//    analyzers.pyDistributionEnabled = false
+//    analyzers.rubygemsEnabled = false
+//}
 
 // can only be applied to root project 
 nexusPublishing {
@@ -62,16 +62,16 @@ githubRelease {
 }
 
 fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
     val regex = "^[0-9,.v-]+(-r)?$".toRegex()
     val isStable = stableKeyword || regex.matches(version)
     return isStable.not()
 }
 
 // https://github.com/ben-manes/gradle-versions-plugin/discussions/482
-tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
-    // reject all non stable versions
-    rejectVersionIf {
-        isNonStable(candidate.version)
-    }
-}
+//tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
+//    // reject all non stable versions
+//    rejectVersionIf {
+//        isNonStable(candidate.version)
+//    }
+//}

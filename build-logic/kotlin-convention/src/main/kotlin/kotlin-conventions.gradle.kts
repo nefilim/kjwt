@@ -8,7 +8,6 @@ plugins {
 }
 
 val invalidQualifiers = setOf("alpha", "beta", "rc", "nightly")
-@Suppress("UnstableApiUsage")
 val kotlinVersion = project.libsCatalog.dependency("gradle-kotlin-jvm").get().versionConstraint.requiredVersion
 configurations.all {
     resolutionStrategy {
