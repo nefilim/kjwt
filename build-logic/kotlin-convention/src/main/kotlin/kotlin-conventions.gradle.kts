@@ -1,6 +1,8 @@
 import buildtools.dependency
 import buildtools.libsCatalog
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.kotlin.dsl.assign
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("jvm")
@@ -35,6 +37,13 @@ java {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.add("-Xjsr305=strict")
+    }
+}
+
 tasks {
     withType<Test>() {
         maxParallelForks = Runtime.getRuntime().availableProcessors()
@@ -42,15 +51,6 @@ tasks {
         testLogging {
             setExceptionFormat("full")
             setEvents(listOf("passed", "skipped", "failed", "standardOut", "standardError"))
-        }
-    }
-
-    withType<KotlinCompile>() {
-        kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict", "-Xopt-in=kotlin.RequiresOptIn")
-            languageVersion = "1.6"
-            apiVersion = "1.6"
-            jvmTarget = "$jvmVersion"
         }
     }
 }

@@ -284,7 +284,7 @@ class JWTSpec: WordSpec() {
                     issuedNow()
                 }
 
-                fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
+                fun standardValidation(claims: JWTClaims): ValidatedNel<KJWTVerificationError, JWTClaims> =
                     validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
 
                 standardValidation(jwt).shouldBeValid()
@@ -313,7 +313,7 @@ class JWTSpec: WordSpec() {
             }
 
             "cross timezone issues and validation" {
-                fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
+                fun standardValidation(claims: JWTClaims): ValidatedNel<KJWTVerificationError, JWTClaims> =
                     validateClaims(notBefore(), expired())(claims)
 
                 val utcClock = Clock.systemUTC()

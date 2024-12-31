@@ -1,8 +1,6 @@
 package io.github.nefilim.kjwt
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -13,8 +11,6 @@ class UnsupportedAlgorithmException(val algorithm: String): Exception("unsupport
 
 private val AllJWSAlgorithmToHeaderIDs = AllAlgorithms.associateBy { it.headerID }
 
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = JWSAlgorithm::class)
 object JWSAlgorithmSerializer: KSerializer<JWSAlgorithm> {
 
     override fun deserialize(decoder: Decoder): JWSAlgorithm {
@@ -29,8 +25,6 @@ object JWSAlgorithmSerializer: KSerializer<JWSAlgorithm> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("JWSAlgorithm", PrimitiveKind.STRING)
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = JWSAlgorithm::class)
 object JOSETypeSerializer: KSerializer<JOSEType> {
 
     override fun deserialize(decoder: Decoder): JOSEType {
