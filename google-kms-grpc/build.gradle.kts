@@ -1,8 +1,4 @@
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.id
-import com.google.protobuf.gradle.plugins
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
 
 plugins {
     `java-library`
@@ -47,7 +43,7 @@ protobuf {
             artifact = libs.grpc.protoc.java.get().toString()
         }
         id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.2.0:jdk7@jar" // libs.grpc.protoc.kotlin.get().toString()
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.1:jdk8@jar" // libs.grpc.protoc.kotlin.get().toString()
         }
     }
     generateProtoTasks {
