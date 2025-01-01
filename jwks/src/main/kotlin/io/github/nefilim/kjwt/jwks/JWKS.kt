@@ -51,7 +51,10 @@ val logger = KotlinLogging.logger {  }
 @Serializable
 data class JWK<T: JWSAlgorithm>(
     @SerialName("kid") val keyID: JWTKeyID,
-    @SerialName("alg") @Serializable(JWSAlgorithmSerializer::class) val algorithm: T,
+    @Suppress("SERIALIZER_TYPE_INCOMPATIBLE")
+    @SerialName("alg")
+    @Serializable(JWSAlgorithmSerializer::class)
+    val algorithm: T,
     @SerialName("kty") val keyType: String? = null,
     val use: Use? = null,
     @SerialName("key_ops") val keyOps: KeyOperations? = null,

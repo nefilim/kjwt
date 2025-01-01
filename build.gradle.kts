@@ -1,11 +1,8 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.tasktree)
     alias(libs.plugins.semver)
     alias(libs.plugins.nexus.publish)
-    alias(libs.plugins.dependencyUpdates)
     alias(libs.plugins.dependencyCheck)
     alias(libs.plugins.githubRelease)
     `maven-publish`
@@ -59,19 +56,4 @@ githubRelease {
     dryRun(false) // by default false; you can use this to see what actions would be taken without making a release
     apiEndpoint("https://api.github.com") // should only change for github enterprise users
     client // This is the okhttp client used for http requests
-}
-
-fun isNonStable(version: String): Boolean {
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
-    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = stableKeyword || regex.matches(version)
-    return isStable.not()
-}
-
-// https://github.com/ben-manes/gradle-versions-plugin/discussions/482
-tasks.named<DependencyUpdatesTask>("dependencyUpdates").configure {
-    // reject all non stable versions
-    rejectVersionIf {
-        isNonStable(candidate.version)
-    }
 }

@@ -22,7 +22,7 @@ sealed interface KJWTValidationError: KJWTVerificationError {
     data class RequiredClaimIsInvalid(val name: String): KJWTValidationError
 }
 
-typealias ClaimsValidatorResult = ValidatedNel<out KJWTVerificationError, JWTClaims>
+typealias ClaimsValidatorResult = ValidatedNel<KJWTVerificationError, JWTClaims>
 typealias ClaimsValidator = (JWTClaims) -> ClaimsValidatorResult
 
 object ClaimsVerification {
