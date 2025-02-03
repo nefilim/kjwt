@@ -1,8 +1,16 @@
 package io.github.nefilim.kjwt.jwks
 
-import arrow.core.*
-import arrow.core.computations.either
-import io.github.nefilim.kjwt.*
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.raise.either
+import arrow.core.raise.ensureNotNull
+import arrow.core.right
+import io.github.nefilim.kjwt.JWSAlgorithm
+import io.github.nefilim.kjwt.JWSAlgorithmSerializer
+import io.github.nefilim.kjwt.JWSECDSAAlgorithm
+import io.github.nefilim.kjwt.JWSRSAAlgorithm
+import io.github.nefilim.kjwt.JWTKeyID
+import io.github.nefilim.kjwt.UnsupportedAlgorithmException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -16,7 +24,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -24,6 +36,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.jsonArray
+import mu.KotlinLogging
 import java.math.BigInteger
 import java.net.URL
 import java.security.AlgorithmParameters
@@ -44,7 +57,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import mu.KotlinLogging
 
 val logger = KotlinLogging.logger {  }
 
@@ -183,8 +195,8 @@ fun interface JWKSProvider<P: PublicKey> {
 }
 
 suspend fun <P: PublicKey>JWKSProvider<P>.getKey(keyID: JWTKeyID): Either<JWKError, P> {
-    return this().flatMap {
-        Either.fromNullable(it[keyID]).mapLeft { JWKError.NoSuchKey(keyID) }
+    return either {
+        ensureNotNull(this@getKey().bind()[keyID]) { JWKError.NoSuchKey(keyID) }
     }
 }
 
@@ -236,9 +248,11 @@ object WellKnownJWKSProvider {
             val jwks = Either.catch {
                 WellKnownJWKSProvider.json.decodeFromString(JWKS.serializer(), json)
             }.mapLeft { JWKError.Exceptionally(it) }.bind()
-            jwks.keys.map { jwk ->
-                jwk.build<P>().map { jwk.keyID to it }.also { logger.info { "Built JWK $it" } }
-            }.sequenceEither().bind().toMap()
+            jwks.keys.associate { jwk ->
+                jwk.build<P>().bind()
+                    .let { jwk.keyID to it }
+                    .also { logger.info { "Built JWK $it" } }
+            }
         }
     }
 }

@@ -2,10 +2,12 @@ package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.Option
-import arrow.core.andThen
-import arrow.core.computations.either
-import arrow.core.computations.option
-import arrow.core.invalidNel
+import arrow.core.flatMap
+import arrow.core.leftNel
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.option
+import arrow.core.toEitherNel
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
@@ -45,7 +47,7 @@ fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>
     return decodedJWT.jwt.header.algorithm.verifySignature(decodedJWT, key)
 }
 fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verifySignature(jwt: String, key: PubK, algorithm: T): Either<KJWTVerificationError, JWT<T>> {
-    return either.eager {
+    return either {
         val dJWTT = JWT.decodeT<T>(jwt, algorithm).bind()
         dJWTT.jwt.header.algorithm.verifySignature(dJWTT, key).bind()
     }
@@ -54,7 +56,7 @@ fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>
     return verifySignature(decodedJWT, key).map {
         validator(it)
     }.fold({
-        it.invalidNel()
+        it.leftNel()
     }, {
         it
     })
@@ -63,7 +65,7 @@ fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>
     return verifySignature<T, PubK, PrivK>(jwt, key, algorithm).map {
         validator(it)
     }.fold({
-        it.invalidNel()
+        it.leftNel()
     }, {
         it
     })
@@ -72,17 +74,17 @@ suspend fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: Pri
     val publicKey = option<PubK> {
         val keyID = decodedJWT.keyID().bind()
         keyProvider(keyID).bind()
-    }.toEither { KJWTVerificationError.MissingKeyID }.toValidatedNel()
-    return publicKey.andThen { verify(decodedJWT, it, validator) }
+    }.toEither { KJWTVerificationError.MissingKeyID }.toEitherNel()
+    return publicKey.flatMap { verify(decodedJWT, it, validator) }
 }
 suspend fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>, PubK: PublicKey, PrivK: PrivateKey>verify(jwt: String, keyProvider: PublicKeyProvider<PubK>, algorithm: T, validator: ClaimsValidator): ClaimsValidatorResult {
-    return JWT.decodeT<T>(jwt, algorithm).toValidatedNel().andThen { decodedJWT ->
+    return JWT.decodeT<T>(jwt, algorithm).toEitherNel().flatMap { decodedJWT ->
         option<Pair<DecodedJWT<T>, PubK>> {
             val keyID = decodedJWT.keyID().bind()
             val key = keyProvider(keyID).bind()
             decodedJWT to key
-        }.toEither { KJWTVerificationError.MissingKeyID }.toValidatedNel()
-    }.andThen { verify(it.first, it.second, validator) }
+        }.toEither { KJWTVerificationError.MissingKeyID }.toEitherNel()
+    }.flatMap { verify(it.first, it.second, validator) }
 }
 
 // --------[ convenience functions for fewer type parameters and constraining type combinations to valid ones ]---
@@ -125,10 +127,11 @@ fun <T: JWSECDSAAlgorithm>verify(jwt: String, key: ECPublicKey, validator: Claim
 
 // ------- [ HMAC ]-----
 fun <T: JWSHMACAlgorithm>verifySignature(jwt: String, secret: String): Either<KJWTVerificationError, JWT<T>> {
-    return either.eager {
+    return either {
         val dJWT = JWT.decode(jwt).bind()
         @Suppress("UNCHECKED_CAST")
-        val dJWTT = Either.conditionally(dJWT.jwt.header.algorithm is JWSHMACAlgorithm, { KJWTVerificationError.AlgorithmMismatch }, { dJWT as DecodedJWT<T> }).bind()
+        ensure(dJWT.jwt.header.algorithm is JWSHMACAlgorithm) { KJWTVerificationError.AlgorithmMismatch }
+        val dJWTT = dJWT as DecodedJWT<T>
         dJWTT.jwt.header.algorithm.verifySignature(dJWTT, secret).bind()
     }
 }
@@ -140,24 +143,24 @@ fun <T: JWSHMACAlgorithm>verify(decodedJWT: DecodedJWT<T>, secret: String, valid
     return verifySignature<T>(decodedJWT, secret).map {
         validator(it)
     }.fold({
-        it.invalidNel()
+        it.leftNel()
     }, {
         it
     })
 }
 inline fun <reified T: JWSHMACAlgorithm>verify(jwt: String, secret: String, noinline validator: ClaimsValidator): ClaimsValidatorResult {
-    val decodedJWT = JWT.decodeT<T>(jwt, algorithm()).toValidatedNel()
-    return decodedJWT.andThen { verify(it, secret, validator) }
+    val decodedJWT = JWT.decodeT<T>(jwt, algorithm()).toEitherNel()
+    return decodedJWT.flatMap { verify(it, secret, validator) }
 }
 fun interface HMACSecretProvider {
     operator fun invoke(keyID: JWTKeyID): Option<String>
 }
 fun <T: JWSHMACAlgorithm>verify(decodedJWT: DecodedJWT<T>, secretProvider: HMACSecretProvider, validator: ClaimsValidator): ClaimsValidatorResult {
-    val secret = option.eager<String> {
+    val secret = option<String> {
         val keyID = decodedJWT.keyID().bind()
         secretProvider(keyID).bind()
-    }.toEither { KJWTVerificationError.MissingKeyID }.toValidatedNel()
-    return secret.andThen { verify(decodedJWT, it, validator) }
+    }.toEither { KJWTVerificationError.MissingKeyID }.toEitherNel()
+    return secret.flatMap { verify(decodedJWT, it, validator) }
 }
 
 // ----- [ key generators ]----

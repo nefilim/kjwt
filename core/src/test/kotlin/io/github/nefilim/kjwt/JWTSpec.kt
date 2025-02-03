@@ -1,6 +1,6 @@
 package io.github.nefilim.kjwt
 
-import arrow.core.ValidatedNel
+import arrow.core.EitherNel
 import arrow.core.getOrElse
 import arrow.core.some
 import com.nimbusds.jose.crypto.ECDSAVerifier
@@ -25,15 +25,14 @@ import io.github.nefilim.kjwt.JWT.Companion.hs512
 import io.github.nefilim.kjwt.JWT.Companion.rs256
 import io.github.nefilim.kjwt.JWT.Companion.rs384
 import io.github.nefilim.kjwt.JWT.Companion.rs512
-import io.kotest.assertions.arrow.core.shouldBeInvalid
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.core.shouldBeSome
-import io.kotest.assertions.arrow.core.shouldBeValid
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import mu.KotlinLogging
-import java.time.*
+import java.time.Clock
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.nimbusds.jwt.SignedJWT as NimbusSignedJWT
 
@@ -273,7 +272,7 @@ class JWTSpec: WordSpec() {
             }
 
             "support standard validations" {
-                val jwt = es256() {
+                val jwt = es256 {
                     subject("1234567890")
                     issuer("thecompany")
                     audience("http://thecompany.com")
@@ -284,12 +283,12 @@ class JWTSpec: WordSpec() {
                     issuedNow()
                 }
 
-                fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
+                fun standardValidation(claims: JWTClaims): EitherNel<KJWTVerificationError, JWTClaims> =
                     validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
 
-                standardValidation(jwt).shouldBeValid()
+                standardValidation(jwt).shouldBeRight()
 
-                val invalidJWT = es256() {
+                val invalidJWT = es256 {
                     subject("123456789")
                     issuer("theothercompany")
                     audience("http://phish.com")
@@ -300,8 +299,7 @@ class JWTSpec: WordSpec() {
                     issuedAt(Instant.now())
                 }
 
-                standardValidation(invalidJWT).shouldBeInvalid().toSet()
-                    .shouldBe(
+                standardValidation(invalidJWT).shouldBeLeft().toSet().shouldBe(
                         setOf(
                             KJWTValidationError.TokenExpired,
                             KJWTValidationError.TokenNotValidYet,
@@ -313,13 +311,13 @@ class JWTSpec: WordSpec() {
             }
 
             "cross timezone issues and validation" {
-                fun standardValidation(claims: JWTClaims): ValidatedNel<out KJWTVerificationError, JWTClaims> =
+                fun standardValidation(claims: JWTClaims): EitherNel<out KJWTVerificationError, JWTClaims> =
                     validateClaims(notBefore(), expired())(claims)
 
                 val utcClock = Clock.systemUTC()
                 val defaultClock = Clock.systemDefaultZone()
 
-                val invalidJWT = es256() {
+                val invalidJWT = es256 {
                     subject("123456789")
                     issuer("theothercompany")
                     audience("http://phish.com")
@@ -330,7 +328,7 @@ class JWTSpec: WordSpec() {
                     issuedNow()
                 }
 
-                standardValidation(invalidJWT).shouldBeValid()
+                standardValidation(invalidJWT).shouldBeRight()
             }
 
             "support custom validations for required/optional claims" {
@@ -343,13 +341,16 @@ class JWTSpec: WordSpec() {
                     issuedAt(Instant.ofEpochSecond(1516239022))
                 }
 
-                validateClaims(requiredOptionClaim("admin", { claimValueAsBoolean("admin") }) { it })(jwt).shouldBeValid()
+                validateClaims(
+                    requiredOptionClaim(
+                        "admin",
+                        { claimValueAsBoolean("admin") }) { it })(jwt).shouldBeRight()
 
                 validateClaims(requiredOptionClaim("alsoadmin", { claimValueAsBoolean("alsoadmin") }) { it })(jwt)
-                    .shouldBeInvalid().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsMissing("alsoadmin"))
+                    .shouldBeLeft().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsMissing("alsoadmin"))
 
                 validateClaims(optionalOptionClaim("alsoadmin", { claimValueAsBoolean("alsoadmin") }) { it })(jwt)
-                    .shouldBeValid()
+                    .shouldBeRight()
             }
 
             "put the receive side all together" {
@@ -370,16 +371,21 @@ class JWTSpec: WordSpec() {
                     validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
                 }
                 val signedJWT = jwt.sign(privateKey).shouldBeRight()
-                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()
+                verify(
+                    signedJWT.rendered,
+                    ECPublicKeyProvider { publicKey.some() },
+                    standardValidation,
+                    JWSES256Algorithm
+                ).shouldBeRight()
 
                 // should not even compile!
                 //val (badPublicKey, _) = generateKeyPair(JWSES256Algorithm)
-                //verify<JWSES256Algorithm>(signedJWT.rendered, badPublicKey, standardValidation).shouldBeInvalid().toSet()
+                //verify<JWSES256Algorithm>(signedJWT.rendered, badPublicKey, standardValidation).shouldBeLeft().toSet()
                 //    .shouldBe(setOf(KJWTVerificationError.InvalidSignature))
 
                 val validator = validateClaims(standardValidation, requiredOptionClaim("admin", { claimValueAsBoolean("admin") }, { !it }))
                 verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, validator, JWSES256Algorithm)
-                    .shouldBeInvalid().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsInvalid("admin"))
+                    .shouldBeLeft().toSet() shouldBe setOf(KJWTValidationError.RequiredClaimIsInvalid("admin"))
             }
 
             "overload reified algorithm for verification" {
@@ -400,10 +406,15 @@ class JWTSpec: WordSpec() {
                     validateClaims(notBefore(), expired(), issuer("thecompany"), subject("1234567890"), audience("http://thecompany.com"))(claims)
                 }
                 val signedJWT = jwt.sign(privateKey).shouldBeRight()
-                verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES256Algorithm).shouldBeValid()
+                verify(
+                    signedJWT.rendered,
+                    ECPublicKeyProvider { publicKey.some() },
+                    standardValidation,
+                    JWSES256Algorithm
+                ).shouldBeRight()
 
                 verify(signedJWT.rendered, ECPublicKeyProvider { publicKey.some() }, standardValidation, JWSES512Algorithm)
-                    .shouldBeInvalid().toSet() shouldBe setOf(KJWTVerificationError.AlgorithmMismatch)
+                    .shouldBeLeft().toSet() shouldBe setOf(KJWTVerificationError.AlgorithmMismatch)
             }
         }
     }

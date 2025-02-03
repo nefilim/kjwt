@@ -1,10 +1,10 @@
 [versions]
-kotlin = "1.6.21"
+kotlin = "2.1.0"
 kotlinXCoroutines = "1.6.4"
-kotlinXSerialization = "1.4.1"
+kotlinXSerialization = "1.8.0"
 
 # third party
-arrow = "1.0.1"
+arrow = "2.0.0"
 google-kms = "0.94.0"
 gradle-github-release = "2.2.12"
 gradle-nexus-publish = "1.1.0"
@@ -17,8 +17,8 @@ grpc = "1.43.1"
 grpc-kotlin = "1.2.0"
 jib = "3.1.4"
 jib-extension = "0.1.0"
-kotest = "5.0.3"
-kotestExtensionsArrow = "1.2.1"
+kotest = "5.9.1"
+kotestExtensionsArrow = "2.0.0"
 kover = "0.4.4"
 kotlinLogging = "2.1.21"
 logback = "1.2.10"
@@ -28,6 +28,8 @@ protobuf = "3.19.1"
 slf4j = "1.7.4"
 
 [libraries]
+kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinXCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinXSerialization" }
