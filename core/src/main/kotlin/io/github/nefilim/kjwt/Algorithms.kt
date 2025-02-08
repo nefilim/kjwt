@@ -1,11 +1,12 @@
 package io.github.nefilim.kjwt
 
 import arrow.core.Either
-import arrow.core.computations.either
-import arrow.core.flatMap
 import arrow.core.left
+import arrow.core.raise.catch
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
 import arrow.core.right
-import kotlin.reflect.typeOf
 import kotlinx.serialization.Serializable
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -18,6 +19,7 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.RSAKeyGenParameterSpec
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.reflect.typeOf
 
 sealed interface KJWTError
 
@@ -47,24 +49,26 @@ sealed interface JWSAlgorithm {
 }
 sealed interface JWSSymmetricAlgorithm: JWSAlgorithm {
     fun <T: JWSSymmetricAlgorithm>sign(jwt: JWT<T>, secret: String): Either<KJWTSignError, SignedJWT<T>> {
-        return either.eager<KJWTSignError, ByteArray> {
-            val nonBlankSecret = Either.conditionally(secret.isNotBlank(), { KJWTSignError.InvalidKey }, { secret }).bind()
-            val secretBytes = stringToBytes(nonBlankSecret).mapLeft { KJWTSignError.InvalidKey }.bind()
-            val dataToSign = stringToBytes(jwt.encode()).mapLeft { KJWTSignError.InvalidJWTData }.bind()
-            Either.catch {
+        return either {
+            ensure(secret.isNotBlank()) { KJWTSignError.InvalidKey }
+            val secretBytes = stringToBytes(secret) { KJWTSignError.InvalidKey }
+            val dataToSign = stringToBytes(jwt.encode()) { KJWTSignError.InvalidJWTData }
+            val signature = catch(block = {
                 val mac = Mac.getInstance(jwt.header.algorithm.algorithmName)
                 mac.init(SecretKeySpec(secretBytes, jwt.header.algorithm.algorithmName))
                 mac.doFinal(dataToSign)
-            }.mapLeft { KJWTSignError.SigningError(it) }.bind()
-        }.map {
-            SignedJWT(jwt, it, jwt.header.algorithm)
+            }, catch = { throwable ->
+                raise(KJWTSignError.SigningError(throwable))
+            })
+            SignedJWT(jwt, signature, jwt.header.algorithm)
         }
     }
     fun <T: JWSSymmetricAlgorithm>verifySignature(dJWT: DecodedJWT<T>, secret: String): Either<KJWTVerificationError, JWT<T>> {
-        return either.eager<KJWTVerificationError, JWT<T>> {
-            val signature = Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.bind()
+        return either<KJWTVerificationError, JWT<T>> {
+            val signature = ensureNotNull(dJWT.signature()) { KJWTVerificationError.MissingSignature }
             val signedJWT = sign(dJWT.jwt, secret).mapLeft { KJWTVerificationError.InvalidJWT }.bind()
-            Either.conditionally(jwtEncodeBytes(signedJWT.signature) == signature, { KJWTVerificationError.InvalidSignature }, { dJWT.jwt} ).bind()
+            ensure(jwtEncodeBytes(signedJWT.signature) == signature) { KJWTVerificationError.InvalidSignature }
+            dJWT.jwt
         }
     }
 }
@@ -95,14 +99,17 @@ sealed interface JWSAsymmetricAlgorithm<PubK: PublicKey, PrivK: PrivateKey>: JWS
     fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>>verifySignature(dJWT: DecodedJWT<T>, key: PubK): Either<KJWTVerificationError, JWT<T>> {
         val signer = Signature.getInstance(dJWT.jwt.header.algorithm.algorithmName)
 
-        return either.eager<KJWTVerificationError, Boolean> {
-            Either.catch { signer.initVerify(key) }.mapLeft { KJWTVerificationError.KeyAlgorithmMismatch }.bind()
-            val dataToVerify = Either.catch { dJWT.signedData().toByteArray() }.mapLeft { KJWTVerificationError.InvalidJWT }.bind()
+        return either {
+            catch(block = { signer.initVerify(key) }, catch = { raise(KJWTVerificationError.KeyAlgorithmMismatch) })
+            val dataToVerify =
+                catch(block = { dJWT.signedData().toByteArray() }, catch = { raise(KJWTVerificationError.InvalidJWT) })
             val sig = signature(dJWT).bind()
-            Either.catch { signer.update(dataToVerify) }.mapLeft { KJWTVerificationError.BrokenSignature }.bind()
-            Either.catch { signer.verify(sig) }.mapLeft { KJWTVerificationError.BrokenSignature }.bind()
-        }.flatMap {
-            Either.conditionally(it, { KJWTVerificationError.InvalidSignature }, { dJWT.jwt })
+            val verified = catch(block = {
+                signer.update(dataToVerify)
+                signer.verify(sig)
+            }, catch = { raise(KJWTVerificationError.BrokenSignature) })
+            ensure(verified) { KJWTVerificationError.InvalidSignature }
+            dJWT.jwt
         }
     }
     fun <T: JWSAsymmetricAlgorithm<PubK, PrivK>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray>
@@ -118,8 +125,10 @@ sealed interface JWSRSAAlgorithm: JWSAsymmetricAlgorithm<RSAPublicKey, RSAPrivat
         }
     }
 
-    override fun <T: JWSAsymmetricAlgorithm<RSAPublicKey, RSAPrivateKey>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray> {
-        return Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.map { decodeString(it) }
+    override fun <T : JWSAsymmetricAlgorithm<RSAPublicKey, RSAPrivateKey>> signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray> =
+        either {
+            val signature = ensureNotNull(dJWT.signature()) { KJWTVerificationError.MissingSignature }
+            decodeString(signature)
     }
 
     companion object {
@@ -166,8 +175,8 @@ sealed interface JWSECDSAAlgorithm: JWSAsymmetricAlgorithm<ECPublicKey, ECPrivat
     }
 
     override fun <T: JWSAsymmetricAlgorithm<ECPublicKey, ECPrivateKey>>signature(dJWT: DecodedJWT<T>): Either<KJWTVerificationError, ByteArray> {
-        return either.eager {
-            val signatureJOSE = Either.fromNullable(dJWT.signature()).mapLeft { KJWTVerificationError.MissingSignature }.bind()
+        return either {
+            val signatureJOSE = ensureNotNull(dJWT.signature()) { KJWTVerificationError.MissingSignature }
             val signatureDecoded = decodeString(signatureJOSE)
             joseToDER(signatureDecoded).mapLeft { KJWTVerificationError.InvalidJWT }.bind()
         }

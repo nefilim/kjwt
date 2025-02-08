@@ -2,11 +2,13 @@ package io.github.nefilim.kjwt
 
 import arrow.core.Either
 import arrow.core.Option
-import arrow.core.computations.either
+import arrow.core.raise.Raise
+import arrow.core.raise.catch
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -126,9 +128,9 @@ class JWT<T: JWSAlgorithm> private constructor(
         }
 
         fun decode(jwt: String): Either<KJWTVerificationError, DecodedJWT<out JWSAlgorithm>> {
-            return either.eager {
+            return either {
                 val parts = jwt.split(".")
-                Either.conditionally (!(parts.size < 2 || parts.size > 3), { KJWTVerificationError.InvalidJWT }, {}).bind()
+                ensure(!(parts.size < 2 || parts.size > 3)) { KJWTVerificationError.InvalidJWT }
 
                 val h = Either.catch {
                     format.decodeFromString(JOSEHeader.serializer(PolymorphicSerializer(JWSAlgorithm::class)), jwtDecodeString(parts[0]))
@@ -143,9 +145,9 @@ class JWT<T: JWSAlgorithm> private constructor(
         }
 
         fun <T: JWSAlgorithm>decodeT(jwt: String, algorithm: T): Either<KJWTVerificationError, DecodedJWT<T>> {
-            return either.eager {
+            return either {
                 val decodedJWT = decode(jwt).bind()
-                Either.conditionally(decodedJWT.jwt.header.algorithm == algorithm, { KJWTVerificationError.AlgorithmMismatch }, { }).bind()
+                ensure(decodedJWT.jwt.header.algorithm == algorithm) { KJWTVerificationError.AlgorithmMismatch }
                 @Suppress("UNCHECKED_CAST")
                 Either.catch { decodedJWT as DecodedJWT<T> }.mapLeft { KJWTVerificationError.AlgorithmMismatch }.bind()
             }
@@ -231,4 +233,8 @@ internal fun Long.fromJWTNumericDate(): Instant = Instant.ofEpochSecond(this, 0L
 fun jwtEncodeBytes(data: ByteArray): String = String(Base64.getUrlEncoder().encode(data)).trimEnd('=') // remove trailing '=' as per JWT spec
 fun jwtDecodeString(data: String): String = String(Base64.getUrlDecoder().decode(data))
 internal fun decodeString(data: String): ByteArray = Base64.getUrlDecoder().decode(data)
-internal fun stringToBytes(data: String): Either<Throwable, ByteArray> = Either.catch { data.toByteArray(Charsets.UTF_8) }
+internal fun Raise<KJWTSignError>.stringToBytes(data: String, raise: () -> KJWTSignError): ByteArray =
+    catch(
+        block = { data.toByteArray(Charsets.UTF_8) },
+        catch = { raise(raise()) }
+    )

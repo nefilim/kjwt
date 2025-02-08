@@ -1,9 +1,8 @@
 package io.github.nefilim.kjwt.jwks
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.getOrElse
 import arrow.core.left
+import arrow.core.raise.either
+import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import io.github.nefilim.kjwt.JWSAlgorithm
 import io.github.nefilim.kjwt.JWSES256Algorithm
@@ -26,19 +25,16 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import mu.KotlinLogging
-import java.net.URL
-import java.net.URLConnection
 import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.util.*
-import kotlin.time.ExperimentalTime
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class JWKSSpec: WordSpec() {
@@ -70,8 +66,13 @@ class JWKSSpec: WordSpec() {
         "WellKnownJWKS" should {
             "download and parse JWKS" {
                 val wellKnownContext = WellKnownJWKSProvider.WellKnownContext("https://www.googleapis.com/oauth2/v3/certs")
-                downloadJWKS(wellKnownContext).flatMap {
-                    Either.fromNullable(Json.parseToJsonElement(it).jsonObject["keys"]?.jsonArray?.first()?.jsonObject?.get("kid")).mapLeft { JWKError.NoSuchKey(JWTKeyID("missing kid?")) }
+                either {
+                    val jwksDownloaded = downloadJWKS(wellKnownContext).bind()
+                    ensureNotNull(
+                        Json.parseToJsonElement(jwksDownloaded).jsonObject["keys"]?.jsonArray?.first()?.jsonObject?.get(
+                            "kid"
+                        )
+                    ) { JWKError.NoSuchKey(JWTKeyID("missing kid?")) }
                 }.fold({
                     fail("failed to download JWKS json from Google: $it")
                 }, {
